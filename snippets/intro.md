@@ -1,12 +1,9 @@
 
 ::: {.cell .markdown}
 
-# Train ML models with MLFlow and Ray
+# ML Experiment Tracking with MLFlow
 
-In this tutorial, we explore some of the infrastructure and platform requirements for large model training, and to support the training of many models by many teams. We focus specifically on 
-
-* experiment tracking (using [MLFlow](https://mlflow.org/))
-* and scheduling training jobs on a GPU cluster (using [Ray](https://www.ray.io/))
+In this tutorial, we explore some of the infrastructure and platform requirements for large model training, and to support the training of many models by many teams. We focus specifically on experiment tracking (using [MLFlow](https://mlflow.org/)).
 
 To run this experiment, you should have already created an account on Chameleon, and become part of a project. You must also have added your SSH key to the CHI@TACC site.
 
@@ -20,14 +17,12 @@ For this experiment, we will provision one bare-metal node with GPUs.
 
 The MLFlow section is more interesting if we run it on a node with two GPUs, because then we can better understand how to configure logging in a distributed training run. But, if need be, we can run it on a node with one GPU.
 
-The Ray section requires a node with two GPUs.
-
 We can browse Chameleon hardware configurations for suitable node types using the [Hardware Browser](https://chameleoncloud.org/hardware/). For example, to find nodes with 2x GPUs: if we expand "Advanced Filters", check the "2" box under "GPU count", and then click "View", we can identify some suitable node types. 
 
 We'll proceed with the `gpu_mi100` and `compute_liqid` node types at CHI@TACC.
 
-* Most of the `gpu_mi100` nodes have two AMD MI100 GPUs. (One of the `gpu_mi100` nodes, `c03-04` has only one GPU; we'll avoid this one for the "Ray" section, which requires two GPUs.)
-* The `compute_liqid` nodes at CHI@TACC have one or two NVIDIA A100 40GB GPUs. As of this writing, `liqid01` and `liqid02` have two GPUs, so we may use these two for the "Ray" section, which requires two GPUs. 
+* Most of the `gpu_mi100` nodes have two AMD MI100 GPUs.
+* The `compute_liqid` nodes at CHI@TACC have one or two NVIDIA A100 40GB GPUs. As of this writing, `liqid01` and `liqid02` have two GPUs.
 
 You can decide which type to use based on availability; but once you decide, make sure to follow the instructions specific to that GPU type. In some parts, there will be different instructions for setting up an AMD GPU node vs. and NVIDIA GPU node.
 
@@ -42,7 +37,7 @@ You can decide which type to use based on availability; but once you decide, mak
 
 ::: {.cell .markdown}
 
-To use bare metal resources on Chameleon, we must reserve them in advance. We can reserve two separate 3-hour blocks for this experiment: one for the MLFlow section and one for the Ray section. They are designed to run independently.
+To use bare metal resources on Chameleon, we must reserve them in advance. We can reserve a 3-hour block for this experiment.
 
 We can use the OpenStack graphical user interface, Horizon, to submit a lease for an MI100 or Liquid node at CHI@TACC. To access this interface,
 
