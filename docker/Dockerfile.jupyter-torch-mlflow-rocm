@@ -1,7 +1,7 @@
 FROM quay.io/jupyter/scipy-notebook
 
 ARG ROCM_VERSION=6.4
-ARG AMDGPU_VERSION=6.4.60404
+ARG AMDGPU_VERSION=6.4.60400
 
 USER root
 RUN wget https://repo.radeon.com/amdgpu-install/$ROCM_VERSION/ubuntu/noble/amdgpu-install_$AMDGPU_VERSION-1_all.deb &&  \
