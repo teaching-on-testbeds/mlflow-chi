@@ -57,7 +57,7 @@ Then,
   * the start and end time of the time you will try to reserve. (Note that if you mouse over an existing reservation, a pop up will show you the exact start and end time of that reservation.)
   * and the name of the node you want to reserve. (We will reserve nodes by name, not by type, to avoid getting a 1-GPU node when we wanted a 2-GPU node.)
 * Then, on the left side, click on "Reservations" > "Leases", and then click on "Create Lease":
-  * set the "Name" to <code>mltrain_<b>netID</b>_<b>X</b></code> where in place of <code><b>netID</b></code> you substitute your actual net ID, and in place of <code><b>X</b></code>, substitute an incrementing number (to differentiate multiple leases for different sections).
+  * set the "Name" to <code>mlflow_<b>netID</b></code> where in place of <code><b>netID</b></code> you substitute your actual net ID.
   * set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
   * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease five minutes before the end of an hour, e.g. at `YY:55`.
   * Click "Next".
@@ -81,7 +81,7 @@ Since you will need the full lease time to actually execute your experiment, you
 
 At the beginning of your lease time, you will continue with the next step, in which you bring up and configure a bare metal instance! Two alternate sets of instructions are provided for this part:
 
-* a notebook that runs in the Chameleon Jupyter interface. This automates the setup process, so that you can "Run > Run Selected Cell and All Below" to let the setup mostly run without human intervention.
-* or, instructions for using the Horizon GUI and an SSH session, in case you cannot or prefer not to use the Chameleon Jupyter interface
+* one for NVIDIA GPU servers
+* and one for AMD GPU servers
 
 :::

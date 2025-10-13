@@ -31,7 +31,7 @@ We'll bring up each of these pieces in Docker containers. To make it easier to d
 
 (However, unlike a container orchestration framework such as Kubernetes, it does not help us launch containers across multiple hosts, or have scaling capabilities.)
 
-You can see our YAML configuration at: [docker-compose-mlflow.yaml](https://github.com/teaching-on-testbeds/mltrain-chi/tree/main/docker/docker-compose-mlflow.yaml)
+You can see our YAML configuration at: [docker-compose-mlflow.yaml](https://github.com/teaching-on-testbeds/mlflow-chi/tree/main/docker/docker-compose-mlflow.yaml)
 
 :::
 
@@ -229,8 +229,8 @@ Now we are ready to get it started! Bring up our MLFlow system with:
 
 
 ```bash
-# run on node-mltrain
-docker compose -f mltrain-chi/docker/docker-compose-mlflow.yaml up -d
+# run on node-mlflow
+docker compose -f mlflow-chi/docker/docker-compose-mlflow.yaml up -d
 ```
 
 which will pull each container image, then start them.
@@ -238,7 +238,7 @@ which will pull each container image, then start them.
 When it is finished, the output of 
 
 ```bash
-# run on node-mltrain
+# run on node-mlflow
 docker ps
 ```
 
@@ -293,7 +293,7 @@ Finally, we'll start the Jupyter server container, inside which we will run expe
 
 
 ```bash
-# run on node-mltrain
+# run on node-mlflow
 docker image list
 ```
 
@@ -303,13 +303,13 @@ The command to run will depend on what type of GPU node you are using -
 If you are using an AMD GPU (node type `gpu_mi100`), run
 
 ```bash
-# run on node-mltrain IF it is a gpu_mi100
+# run on node-mlflow IF it is a gpu_mi100
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
     --device=/dev/kfd --device=/dev/dri \
     --group-add video --group-add $(getent group | grep render | cut -d':' -f 3) \
     --shm-size 16G \
-    -v ~/mltrain-chi/workspace_mlflow:/home/jovyan/work/ \
+    -v ~/mlflow-chi/workspace_mlflow:/home/jovyan/work/ \
     -v food11:/mnt/ \
     -e MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/ \
     -e FOOD11_DATA_DIR=/mnt/Food-11 \
@@ -327,19 +327,19 @@ Here,
 * `--device=/dev/kfd --device=/dev/dri` pass the AMD GPUs to the container
 * `--group-add video --group-add $(getent group | grep render | cut -d':' -f 3)` makes sure that the user inside the container is a member of a group that has permission to use the GPU(s) - the `video` group and the `render` group. (The `video` group always has the same group ID, by convention, but [the `render` group does not](https://github.com/ROCm/ROCm-docker/issues/90), so we need to find out its group ID on the host and pass that to the container.)
 * `--shm-size 16G` increases the memory available for interprocess communication
-* the host directory `~/mltrain-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
+* the host directory `~/mlflow-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
 
 If you are using an NVIDIA GPU (node type `compute_liqid`), run
 
 ```bash
-# run on node-mltrain IF it is a compute_liqid
+# run on node-mlflow IF it is a compute_liqid
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
     --gpus all \
     --shm-size 16G \
-    -v ~/mltrain-chi/workspace_mlflow:/home/jovyan/work/ \
+    -v ~/mlflow-chi/workspace_mlflow:/home/jovyan/work/ \
     -v food11:/mnt/ \
     -e MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/ \
     -e FOOD11_DATA_DIR=/mnt/Food-11 \
@@ -354,7 +354,7 @@ Note that we intially get `HOST_IP`, the floating IP assigned to your instance, 
 * `-p 8888:8888` says to publish the container's port `8888` (the second `8888` in the argument) to the host port `8888` (the first `8888` in the argument)
 * `--gus all` pass the NVIDIA GPUs to the container
 * `--shm-size 16G` increases the memory available for interprocess communication
-* the host directory `~/mltrain-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
+* the host directory `~/mlflow-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
 
@@ -377,7 +377,7 @@ In the file browser on the left side, open the `work` directory.
 Open a terminal ("File > New > Terminal") inside the Jupyter server environment, and in this terminal, run
 
 ```bash
-# runs on jupyter container inside node-mltrain
+# runs on jupyter container inside node-mlflow
 env
 ```
 

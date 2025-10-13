@@ -10,7 +10,7 @@ After completing this section, you should be able to:
 * use the MLFlow Python API to search runs 
 * and use the MLFlow Python API to interact with the model registry
 
-The code in this notebook will run in the "jupyter" container on "node-mltrain". Inside the "work" directory in your Jupyter container on "node-mltrain", open the `mlflow_api.ipynb` notebook, and follow along there to execute this notebook.
+The code in this notebook will run in the "jupyter" container on "node-mlflow". Inside the "work" directory in your Jupyter container on "node-mlflow", open the `mlflow_api.ipynb` notebook, and follow along there to execute this notebook.
 
 :::
 
@@ -182,14 +182,14 @@ In the file browser on the left side, note that the "downloaded_model" directory
 When you are finished with this section, stop the MLFlow tracking server and its associated pieces (database, object store) with
 
 ```bash
-# run on node-mltrain
-docker compose -f mltrain-chi/docker/docker-compose-mlflow.yaml down
+# run on node-mlflow
+docker compose -f mlflow-chi/docker/docker-compose-mlflow.yaml down
 ```
 
 and then stop the Jupyter server with
 
 ```bash
-# run on node-mltrain
+# run on node-mlflow
 docker stop jupyter
 ```
 

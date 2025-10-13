@@ -48,7 +48,7 @@ Then,
   * the start and end time of the time you will try to reserve. (Note that if you mouse over an existing reservation, a pop up will show you the exact start and end time of that reservation.)
   * and the name of the node you want to reserve. (We will reserve nodes by name, not by type, to avoid getting a 1-GPU node when we wanted a 2-GPU node.)
 * Then, on the left side, click on "Reservations" > "Leases", and then click on "Create Lease":
-  * set the "Name" to <code>mltrain_<b>netID</b>_<b>X</b></code> where in place of <code><b>netID</b></code> you substitute your actual net ID, and in place of <code><b>X</b></code>, substitute an incrementing number (to differentiate multiple leases for different sections).
+  * set the "Name" to <code>mlflow_<b>netID</b></code> where in place of <code><b>netID</b></code> you substitute your actual net ID.
   * set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
   * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease five minutes before the end of an hour, e.g. at `YY:55`.
   * Click "Next".
@@ -68,8 +68,8 @@ Since you will need the full lease time to actually execute your experiment, you
 
 At the beginning of your lease time, you will continue with the next step, in which you bring up and configure a bare metal instance! Two alternate sets of instructions are provided for this part:
 
-* a notebook that runs in the Chameleon Jupyter interface. This automates the setup process, so that you can "Run > Run Selected Cell and All Below" to let the setup mostly run without human intervention.
-* or, instructions for using the Horizon GUI and an SSH session, in case you cannot or prefer not to use the Chameleon Jupyter interface
+* one for NVIDIA GPU servers
+* and one for AMD GPU servers
 
 
 
@@ -103,21 +103,21 @@ For the rest of this tutorial, we'll be training models on the [Food-11 dataset]
 First, create the volume:
 
 ```bash
-# runs on node-mltrain
+# runs on node-mlflow
 docker volume create food11
 ```
 
 Then, to populate it with data, run
 
 ```bash
-# runs on node-mltrain
-docker compose -f mltrain-chi/docker/docker-compose-data.yaml up -d
+# runs on node-mlflow
+docker compose -f mlflow-chi/docker/docker-compose-data.yaml up -d
 ```
 
 This will run a temporary container that downloads the Food-11 dataset, organizes it in the volume, and then stops. It may take a minute or two. You can verify with 
 
 ```bash
-# runs on node-mltrain
+# runs on node-mlflow
 docker ps
 ```
 
@@ -126,7 +126,7 @@ that it is done - when there are no running containers.
 Finally, verify that the data looks as it should. Start a shell in a temporary container with this volume attached, and `ls` the contents of the volume:
 
 ```bash
-# runs on node-mltrain
+# runs on node-mlflow
 docker run --rm -it -v food11:/mnt alpine ls -l /mnt/Food-11/
 ```
 
@@ -159,7 +159,7 @@ We'll bring up each of these pieces in Docker containers. To make it easier to d
 
 (However, unlike a container orchestration framework such as Kubernetes, it does not help us launch containers across multiple hosts, or have scaling capabilities.)
 
-You can see our YAML configuration at: [docker-compose-mlflow.yaml](https://github.com/teaching-on-testbeds/mltrain-chi/tree/main/docker/docker-compose-mlflow.yaml)
+You can see our YAML configuration at: [docker-compose-mlflow.yaml](https://github.com/teaching-on-testbeds/mlflow-chi/tree/main/docker/docker-compose-mlflow.yaml)
 
 
 
@@ -351,8 +351,8 @@ Now we are ready to get it started! Bring up our MLFlow system with:
 
 
 ```bash
-# run on node-mltrain
-docker compose -f mltrain-chi/docker/docker-compose-mlflow.yaml up -d
+# run on node-mlflow
+docker compose -f mlflow-chi/docker/docker-compose-mlflow.yaml up -d
 ```
 
 which will pull each container image, then start them.
@@ -360,7 +360,7 @@ which will pull each container image, then start them.
 When it is finished, the output of 
 
 ```bash
-# run on node-mltrain
+# run on node-mlflow
 docker ps
 ```
 
@@ -411,7 +411,7 @@ Finally, we'll start the Jupyter server container, inside which we will run expe
 
 
 ```bash
-# run on node-mltrain
+# run on node-mlflow
 docker image list
 ```
 
@@ -421,13 +421,13 @@ The command to run will depend on what type of GPU node you are using -
 If you are using an AMD GPU (node type `gpu_mi100`), run
 
 ```bash
-# run on node-mltrain IF it is a gpu_mi100
+# run on node-mlflow IF it is a gpu_mi100
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
     --device=/dev/kfd --device=/dev/dri \
     --group-add video --group-add $(getent group | grep render | cut -d':' -f 3) \
     --shm-size 16G \
-    -v ~/mltrain-chi/workspace_mlflow:/home/jovyan/work/ \
+    -v ~/mlflow-chi/workspace_mlflow:/home/jovyan/work/ \
     -v food11:/mnt/ \
     -e MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/ \
     -e FOOD11_DATA_DIR=/mnt/Food-11 \
@@ -445,19 +445,19 @@ Here,
 * `--device=/dev/kfd --device=/dev/dri` pass the AMD GPUs to the container
 * `--group-add video --group-add $(getent group | grep render | cut -d':' -f 3)` makes sure that the user inside the container is a member of a group that has permission to use the GPU(s) - the `video` group and the `render` group. (The `video` group always has the same group ID, by convention, but [the `render` group does not](https://github.com/ROCm/ROCm-docker/issues/90), so we need to find out its group ID on the host and pass that to the container.)
 * `--shm-size 16G` increases the memory available for interprocess communication
-* the host directory `~/mltrain-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
+* the host directory `~/mlflow-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
 
 If you are using an NVIDIA GPU (node type `compute_liqid`), run
 
 ```bash
-# run on node-mltrain IF it is a compute_liqid
+# run on node-mlflow IF it is a compute_liqid
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
     --gpus all \
     --shm-size 16G \
-    -v ~/mltrain-chi/workspace_mlflow:/home/jovyan/work/ \
+    -v ~/mlflow-chi/workspace_mlflow:/home/jovyan/work/ \
     -v food11:/mnt/ \
     -e MLFLOW_TRACKING_URI=http://${HOST_IP}:8000/ \
     -e FOOD11_DATA_DIR=/mnt/Food-11 \
@@ -472,7 +472,7 @@ Note that we intially get `HOST_IP`, the floating IP assigned to your instance, 
 * `-p 8888:8888` says to publish the container's port `8888` (the second `8888` in the argument) to the host port `8888` (the first `8888` in the argument)
 * `--gus all` pass the NVIDIA GPUs to the container
 * `--shm-size 16G` increases the memory available for interprocess communication
-* the host directory `~/mltrain-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
+* the host directory `~/mlflow-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
 
@@ -495,7 +495,7 @@ In the file browser on the left side, open the `work` directory.
 Open a terminal ("File > New > Terminal") inside the Jupyter server environment, and in this terminal, run
 
 ```bash
-# runs on jupyter container inside node-mltrain
+# runs on jupyter container inside node-mlflow
 env
 ```
 
@@ -999,7 +999,7 @@ After completing this section, you should be able to:
 * use the MLFlow Python API to search runs 
 * and use the MLFlow Python API to interact with the model registry
 
-The code in this notebook will run in the "jupyter" container on "node-mltrain". Inside the "work" directory in your Jupyter container on "node-mltrain", open the `mlflow_api.ipynb` notebook, and follow along there to execute this notebook.
+The code in this notebook will run in the "jupyter" container on "node-mlflow". Inside the "work" directory in your Jupyter container on "node-mlflow", open the `mlflow_api.ipynb` notebook, and follow along there to execute this notebook.
 
 
 
@@ -1129,14 +1129,14 @@ In the file browser on the left side, note that the "downloaded_model" directory
 When you are finished with this section, stop the MLFlow tracking server and its associated pieces (database, object store) with
 
 ```bash
-# run on node-mltrain
-docker compose -f mltrain-chi/docker/docker-compose-mlflow.yaml down
+# run on node-mlflow
+docker compose -f mlflow-chi/docker/docker-compose-mlflow.yaml down
 ```
 
 and then stop the Jupyter server with
 
 ```bash
-# run on node-mltrain
+# run on node-mlflow
 docker stop jupyter
 ```
 

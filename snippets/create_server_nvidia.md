@@ -7,7 +7,7 @@
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server. 
 
-> **Note**: if you don't have access to the Chameleon Jupyter environment, or if you prefer to set up your NVIDIA server by hand, the next section provides alternative instructions! If you want to set up your server "by hand", skip to the next section.
+> **Note**: if you reserved a server with AMD GPU, follow the alternate AMD notebook instead.
 
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
@@ -35,7 +35,7 @@ Change the string in the following cell to reflect the name of *your* lease (**w
 
 ::: {.cell .code}
 ```python
-l = lease.get_lease(f"mltrain_netID") 
+l = lease.get_lease(f"mlflow_netID") 
 l.show()
 ```
 :::
@@ -63,7 +63,7 @@ We will use the lease to bring up a server with the `CC-Ubuntu24.04-CUDA` disk i
 ```python
 username = os.getenv('USER') # all exp resources will have this prefix
 s = server.Server(
-    f"node-mltrain-{username}", 
+    f"node-mlflow-{username}", 
     reservation_id=l.node_reservations[0]["id"],
     image_name="CC-Ubuntu24.04-CUDA"
 )
@@ -122,7 +122,7 @@ Now, we can use `python-chi` to execute commands on the instance, to set it up. 
 
 ::: {.cell .code}
 ```python
-s.execute("git clone --recurse-submodules https://github.com/teaching-on-testbeds/mltrain-chi")
+s.execute("git clone --recurse-submodules https://github.com/teaching-on-testbeds/mlflow-chi")
 ```
 :::
 
@@ -186,17 +186,17 @@ s.execute("sudo apt -y install nvtop")
 
 ::: {.cell .markdown}
 
-###  Build a container image - for MLFlow section
+###  Build a container image for MLFlow
 
 
-Finally, we will build a container image in which to work in the MLFlow section, that has:
+Finally, we will build a container image in which to work on the MLFlow experiment, that has:
 
 * a Jupyter notebook server
 * Pytorch and Pytorch Lightning
 * CUDA, which allows deep learning frameworks like Pytorch to use the NVIDIA GPU accelerator
 * and MLFlow
 
-You can see our Dockerfile for this image at: [Dockerfile.jupyter-torch-mlflow-cuda](https://github.com/teaching-on-testbeds/mltrain-chi/tree/main/docker/Dockerfile.jupyter-torch-mlflow-cuda)
+You can see our Dockerfile for this image at: [Dockerfile.jupyter-torch-mlflow-cuda](https://github.com/teaching-on-testbeds/mlflow-chi/tree/main/docker/Dockerfile.jupyter-torch-mlflow-cuda)
 
 
 Building this container may take a bit of time, but that's OK: we can get it started and then continue to the next section while it builds in the background, since we don't need this container immediately.
@@ -206,7 +206,7 @@ Building this container may take a bit of time, but that's OK: we can get it sta
 
 ::: {.cell .code}
 ```python
-s.execute("docker build -t jupyter-mlflow -f mltrain-chi/docker/Dockerfile.jupyter-torch-mlflow-cuda .")
+s.execute("docker build -t jupyter-mlflow -f mlflow-chi/docker/Dockerfile.jupyter-torch-mlflow-cuda .")
 ```
 :::
 

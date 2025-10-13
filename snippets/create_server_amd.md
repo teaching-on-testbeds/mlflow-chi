@@ -6,7 +6,7 @@
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server. 
 
-> **Note**: if you don't have access to the Chameleon Jupyter environment, or if you prefer to set up your AMD MI100 server by hand, the next section provides alternative instructions! If you want to set up your server "by hand", skip to the next section.
+> **Note**: if you reserved a server with NVIDIA GPU, follow the alternate NVIDIA notebook instead.
 
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
@@ -34,7 +34,7 @@ Change the string in the following cell to reflect the name of *your* lease (**w
 
 ::: {.cell .code}
 ```python
-l = lease.get_lease(f"mltrain_netID") 
+l = lease.get_lease(f"mlflow_netID") 
 l.show()
 ```
 :::
@@ -51,7 +51,7 @@ As the notebook executes, monitor its progress to make sure it does not get stuc
 
 ::: {.cell .markdown}
 
-We will use the lease to bring up a server with the `CC-Ubuntu24.04-hwe` disk image. (The default Ubuntu 24.04 kernel is not compatible with the AMD GPU on these nodes.)
+We will use the lease to bring up a server with the `CC-Ubuntu24.04-ROCm` disk image. (The default Ubuntu 24.04 kernel is not compatible with the AMD GPU on these nodes.)
 
 > **Note**: the following cell brings up a server only if you don't already have one with the same name! (Regardless of its error state.) If you have a server in ERROR state already, delete it first in the Horizon GUI before you run this cell.
 
@@ -63,9 +63,9 @@ We will use the lease to bring up a server with the `CC-Ubuntu24.04-hwe` disk im
 ```python
 username = os.getenv('USER') # all exp resources will have this prefix
 s = server.Server(
-    f"node-mltrain-{username}", 
+    f"node-mlflow-{username}", 
     reservation_id=l.node_reservations[0]["id"],
-    image_name="CC-Ubuntu24.04-hwe"
+    image_name="CC-Ubuntu24.04-ROCm"
 )
 s.submit(idempotent=True)
 ```
@@ -122,7 +122,7 @@ Now, we can use `python-chi` to execute commands on the instance, to set it up. 
 
 ::: {.cell .code}
 ```python
-s.execute("git clone --recurse-submodules https://github.com/teaching-on-testbeds/mltrain-chi")
+s.execute("git clone --recurse-submodules https://github.com/teaching-on-testbeds/mlflow-chi")
 ```
 :::
 
@@ -262,17 +262,17 @@ s.execute("mkdir -p nvtop/build && cd nvtop/build && cmake .. -DAMDGPU_SUPPORT=O
 
 ::: {.cell .markdown}
 
-###  Build a container image - for MLFlow section
+###  Build a container image for MLFlow
 
 
-Finally, we will build a container image in which to work in the MLFlow section, that has:
+Finally, we will build a container image in which to work on the MLFlow experiment, that has:
 
 * a Jupyter notebook server
 * Pytorch and Pytorch Lightning
 * ROCm, which allows deep learning frameworks like Pytorch to use the AMD GPU accelerator
 * and MLFlow
 
-You can see our Dockerfile for this image at: [Dockerfile.jupyter-torch-mlflow-rocm](https://github.com/teaching-on-testbeds/mltrain-chi/tree/main/docker/Dockerfile.jupyter-torch-mlflow-rocm)
+You can see our Dockerfile for this image at: [Dockerfile.jupyter-torch-mlflow-rocm](https://github.com/teaching-on-testbeds/mlflow-chi/tree/main/docker/Dockerfile.jupyter-torch-mlflow-rocm)
 
 
 Building this container will take a **very long** time (ROCm is huge). But that's OK: we can get it started and then continue to the next section while it builds in the background, since we don't need this container immediately. We just need it to finish by the "Start a Jupyter server" subsection of the "Start the tracking server" section.
@@ -283,7 +283,7 @@ Building this container will take a **very long** time (ROCm is huge). But that'
 
 ::: {.cell .code}
 ```python
-s.execute("docker build -t jupyter-mlflow -f mltrain-chi/docker/Dockerfile.jupyter-torch-mlflow-rocm .")
+s.execute("docker build -t jupyter-mlflow -f mlflow-chi/docker/Dockerfile.jupyter-torch-mlflow-rocm .")
 ```
 :::
 
