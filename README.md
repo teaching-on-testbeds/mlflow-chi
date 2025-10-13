@@ -7,7 +7,7 @@ Note: this tutorial requires advance reservation of specific hardware! You will 
 You can use either:
 
 * a `gpu_mi100` at CHI@TACC, or
-* a `compute_liqid` at CHI@TACCmake
+* a `compute_liqid` at CHI@TACC
 
 
 ---
