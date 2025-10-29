@@ -41,7 +41,7 @@ services:
 
   # Postgresql server provides storage for parameters, metrics from experiment runs
   postgres:
-    image: postgres:latest
+    image: postgres:16
     container_name: postgres
     restart: always
     environment:
