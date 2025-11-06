@@ -29,3 +29,5 @@ RUN pip install --pre --no-cache-dir pyrsmi && \
     pip install --pre --no-cache-dir mlflow==2.22.2 && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
+
+ENV NCCL_P2P_DISABLE=1
