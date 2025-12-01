@@ -20,7 +20,7 @@ services:
       retries: 5
     command: server /data --console-address ":9001"
     volumes:
-      - minio_data:/data  # Use a volume so minio storage persists beyond container lifetype
+      - minio_data:/data  # Use a volume so minio storage persists beyond container lifetime
 
   # When the minio service has started, launch a container with the minio client
   # and use it to create a bucket named mlflow-artifacts
