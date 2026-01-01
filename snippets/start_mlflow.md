@@ -358,19 +358,20 @@ Note that we intially get `HOST_IP`, the floating IP assigned to your instance, 
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
 
-Then, run 
+To access the Jupyter service, we will need its randomly generated secret token (which secures it from unauthorized access). We'll get this token by running `jupyter server list` inside the `jupyter` container:
 
-```
-docker logs jupyter
-```
-
-and look for a line like
-
-```
-http://127.0.0.1:8888/lab?token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```bash
+# run on node-mlflow
+docker exec jupyter jupyter server list
 ```
 
-Paste this into a browser tab, but in place of `127.0.0.1`, substitute the floating IP assigned to your instance, to open the Jupyter notebook interface.
+Look for a line like
+
+```
+http://localhost:8888/lab?token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+Paste this into a browser tab, but in place of `localhost`, substitute the floating IP assigned to your instance, to open the Jupyter notebook interface.
 
 In the file browser on the left side, open the `work` directory.
 
