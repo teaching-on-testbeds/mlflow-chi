@@ -1,0 +1,75 @@
+name: tracking_service
+services:
+  # Garage object store service provides storage for artifacts, models
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: garage
+    restart: always
+    expose:
+      - "9000"
+      - "9001"
+      - "3901"
+    ports:
+      - "9000:9000"  # S3 API (matches MinIO port for minimal change)
+      - "9001:9001"  # Garage admin API (not a MinIO-like UI)
+    command: ["/garage", "-c", "/etc/garage.toml", "server"]
+    volumes:
+      - garage_data:/var/lib/garage/data
+      - garage_meta:/var/lib/garage/meta
+      - ./bootstrap/garage.toml:/etc/garage.toml:ro
+
+  # Bootstrap Garage: create bucket + generate key once and write creds.env (no manual steps)
+  garage_bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile.garage-bootstrap
+    container_name: garage_bootstrap
+    depends_on:
+      - garage
+    restart: "no"
+    volumes:
+      - ./bootstrap/garage.toml:/etc/garage.toml:ro
+      - ./bootstrap:/bootstrap
+      - garage_data:/var/lib/garage/data
+      - garage_meta:/var/lib/garage/meta
+    entrypoint: ["/bin/sh", "-lc"]
+    command: ["/bootstrap/bootstrap.sh"]
+
+  # Postgresql server provides storage for parameters, metrics from experiment runs
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mlflowdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # use a volume so storage persists beyond container lifetype
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.20.2
+    container_name: mlflow
+    restart: always
+    depends_on:
+      - garage
+      - postgres
+      - garage_bootstrap
+    env_file:
+      - ./bootstrap/creds.env
+    environment:
+      MLFLOW_TRACKING_URI: http://0.0.0.0:8000
+      MLFLOW_S3_ENDPOINT_URL: http://garage:9000  # how mlflow will access object store
+    ports:
+      - "8000:8000"
+    command: >
+      /bin/sh -c "pip install psycopg2-binary boto3 &&
+      mlflow server --backend-store-uri postgresql://user:password@postgres/mlflowdb
+      --artifacts-destination s3://mlflow-artifacts/ --serve-artifacts --host 0.0.0.0 --port 8000"
+
+volumes:
+  postgres_data:
+  garage_data:
+  garage_meta:
