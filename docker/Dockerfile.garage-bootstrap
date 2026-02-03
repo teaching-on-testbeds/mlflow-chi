@@ -1,9 +1,0 @@
-FROM alpine:3.20
-
-RUN apk add --no-cache ca-certificates netcat-openbsd
-
-# Copy the Garage binary from the official Garage image
-COPY --from=dxflrs/garage:v2.2.0 /garage /garage
-RUN chmod +x /garage
-
-WORKDIR /
