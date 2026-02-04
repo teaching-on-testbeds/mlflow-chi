@@ -297,6 +297,7 @@ Finally, the MLFlow tracking server is specified:
       - minio-create-bucket  # make sure minio and postgres services are alive, and bucket is created, before mlflow starts
     environment:
       MLFLOW_TRACKING_URI: http://0.0.0.0:8000
+      MLFLOW_SERVER_ALLOWED_HOSTS: "*"
       MLFLOW_S3_ENDPOINT_URL: http://minio:9000  # how mlflow will access object store
       AWS_ACCESS_KEY_ID: "your-access-key"
       AWS_SECRET_ACCESS_KEY: "your-secret-key"
@@ -315,6 +316,7 @@ docker run -d --name mlflow \
   --restart always \
   -p 8000:8000 \
   -e MLFLOW_TRACKING_URI="http://0.0.0.0:8000" \
+  -e MLFLOW_SERVER_ALLOWED_HOSTS="*" \
   -e MLFLOW_S3_ENDPOINT_URL="http://minio:9000" \
   -e AWS_ACCESS_KEY_ID="your-access-key" \
   -e AWS_SECRET_ACCESS_KEY="your-secret-key" \
