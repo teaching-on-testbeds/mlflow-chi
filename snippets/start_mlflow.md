@@ -58,7 +58,7 @@ Next, let's look at the part that specifies the MinIO container:
 
 ```
   minio:
-    image: minio/minio
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: always
     expose:
       - "9000"
@@ -87,10 +87,10 @@ docker run -d --name minio \
   -e MINIO_ROOT_USER="your-access-key" \
   -e MINIO_ROOT_PASSWORD="your-secret-key" \
   -v minio_data:/data \
-  minio/minio server /data --console-address ":9001"
+  minio/minio:RELEASE.2025-09-07T16-13-09Z server /data --console-address ":9001"
 ````
 
-where we start a container named `minio`, publish ports 9000 and 9001, pass two environment variables into the container (`MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), and attach a volume `minio_data` that is mounted at `/data` inside the container. The container image is [`minio/minio`](https://hub.docker.com/r/minio/minio/tags), and we specify that the command 
+where we start a container named `minio`, publish ports 9000 and 9001, pass two environment variables into the container (`MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), and attach a volume `minio_data` that is mounted at `/data` inside the container. The container image is [`minio/minio:RELEASE.2025-09-07T16-13-09Z`](https://hub.docker.com/r/minio/minio:RELEASE.2025-09-07T16-13-09Z/tags), and we specify that the command 
 
 ```
 server /data --console-address ":9001"
@@ -104,7 +104,7 @@ Next, we have
 
 ```
   minio-create-bucket:
-    image: minio/mc
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z-cpuv1
     depends_on:
       minio:
         condition: service_healthy
@@ -119,7 +119,7 @@ Next, we have
       fi"
 ```
 
-which creates a container that starts only once the `minio` container has passed a health check; this container uses an image with the MinIO client `mc`, `minio/mc`, and it just authenticates to the `minio` server that is running on the same Docker network, then creates a storage "bucket" named `mlflow-artifacts`, and exits:
+which creates a container that starts only once the `minio` container has passed a health check; this container uses an image with the MinIO client `mc`, `minio/mc:RELEASE.2025-08-13T08-35-41Z-cpuv1`, and it just authenticates to the `minio` server that is running on the same Docker network, then creates a storage "bucket" named `mlflow-artifacts`, and exits:
 
 ```
 mc alias set minio http://minio:9000 your-access-key your-secret-key
@@ -130,7 +130,7 @@ The PostgreSQL database backend is defined in
 
 ```
   postgres:
-    image: postgres:latest
+    image: postgres:18
     container_name: postgres
     restart: always
     environment:
@@ -153,7 +153,7 @@ docker run -d --name postgres \
   -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=mlflowdb \
   -v postgres_data:/var/lib/postgresql/data \
-  postgres:latest
+  postgres:18
 ```
 
 where like the MinIO container, we specify the container name and image, the port to publish (`5432`), some environment variables, and we attach a volume. 
@@ -162,7 +162,7 @@ Finally, the MLFlow tracking server is specified:
 
 ```
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.20.2
+    image: ghcr.io/mlflow/mlflow:v3.9.0
     container_name: mlflow
     restart: always
     depends_on:
@@ -193,7 +193,7 @@ docker run -d --name mlflow \
   -e AWS_ACCESS_KEY_ID="your-access-key" \
   -e AWS_SECRET_ACCESS_KEY="your-secret-key" \
   --network host \
-  ghcr.io/mlflow/mlflow:v2.20.2 \
+  ghcr.io/mlflow/mlflow:v3.9.0 \
   /bin/sh -c "pip install psycopg2-binary boto3 &&
   mlflow server --backend-store-uri postgresql://user:password@postgres/mlflowdb 
   --artifacts-destination s3://mlflow/ --serve-artifacts --host 0.0.0.0 --port 8000"
