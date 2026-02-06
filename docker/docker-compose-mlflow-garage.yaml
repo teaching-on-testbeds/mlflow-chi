@@ -1,0 +1,73 @@
+name: tracking_service
+services:
+  # Garage object store service provides storage for artifacts, models
+  garage:
+    image: dxflrs/garage:v2.2.0
+    container_name: garage
+    restart: always
+    expose:
+      - "3900"
+    ports:
+      - "3900:3900"  # S3 API (use Garage default)
+    command: ["/garage", "-c", "/etc/garage.toml", "server"]
+    volumes:
+      - garage_data:/var/lib/garage/data
+      - garage_meta:/var/lib/garage/meta
+      - ./garage-bootstrap/garage.toml:/etc/garage.toml:ro
+  
+  # Sets up a Garage bucket and credentials for MLFlow
+  garage-init:
+    image: docker:26-cli
+    depends_on:
+      - garage
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./garage-bootstrap:/bootstrap
+      - ./garage-bootstrap/garage.toml:/etc/garage.toml:ro
+    entrypoint: ["/bin/sh", "/bootstrap/garage-init.sh"]
+
+  # Postgresql server provides storage for parameters, metrics from experiment runs
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mlflowdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql  # use a volume so storage persists beyond container lifetime
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.9.0
+    container_name: mlflow
+    restart: always
+    depends_on:
+      garage:
+        condition: service_started
+      postgres:
+        condition: service_started
+      garage-init:
+        condition: service_completed_successfully
+    environment:
+      MLFLOW_TRACKING_URI: http://0.0.0.0:8000
+      MLFLOW_S3_ENDPOINT_URL: http://garage:3900  # how mlflow will access object store
+      MLFLOW_SERVER_ALLOWED_HOSTS: "*"
+    volumes:
+      - ./garage-bootstrap:/bootstrap:ro
+    ports:
+      - "8000:8000"
+    command: >
+      /bin/sh -c "set -a &&
+      . /bootstrap/creds.env &&
+      set +a &&
+      pip install psycopg2-binary boto3 &&
+      mlflow server --backend-store-uri postgresql://user:password@postgres/mlflowdb
+      --artifacts-destination s3://mlflow-artifacts/ --serve-artifacts --host 0.0.0.0 --port 8000"
+
+volumes:
+  postgres_data:
+  garage_data:
+  garage_meta:
