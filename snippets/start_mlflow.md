@@ -15,12 +15,12 @@ Now, we are ready to get our MLFlow tracking server running! After you finish th
 ### Understand the MLFlow tracking server system
 
 
-The MLFLow experiment tracking system [can scale](https://mlflow.org/docs/latest/tracking.html#common-setups) from a "personal" deployment on your own machine, to a larger scale deployment suitable for use by a team. Since we are interested in building and managing ML platforms and systems, not only in using them, we are of course going to bring up a larger scale instance.
+The MLFLow experiment tracking system can scale from a "personal" deployment on your own machine, to a larger scale deployment suitable for use by a team. Since we are interested in building and managing ML platforms and systems, not only in using them, we are of course going to bring up a larger scale instance.
 
 The "remote tracking server" system includes:
 
-* a database in which to store structured data for each "run", like the start and end time, hyperparameter values, and the values of metrics that we log to the server. In our deploymenet, this will be realized by a PostgreSQL server.
-* an object store, in which MLFlow will log artifacts - model weights, images (e.g. PNGs), and so on. In our deployment, this will be realized by MinIO, an open source object storage system that is compatible with AWS S3 APIs (so it may be used as a drop-in self-managed replacement for AWS S3).
+* a database in which to store structured data for each "run", like the start and end time, hyperparameter values, and the values of metrics that we log to the server. In our deploymenet, this will be realized by a PostgreSQL server. 
+* an object store, in which MLFlow will log artifacts - model weights, images (e.g. PNGs), and so on. In our deployment, this will be realized by MinIO, an open source object storage system that is compatible with AWS S3 APIs (so it may be used as a drop-in self-managed replacement for AWS S3). More generally, we could use any S3-compatible block storage, including Chameleon's block storage services.
 * and of course, the MLFlow tracking server itself. Users can interact with the MLFlow tracking server directly through a browser-based interface; user code will interact with the MLFlow tracking server through its APIs, implemented in the `mlflow` Python library.
 
 :::
@@ -90,7 +90,7 @@ docker run -d --name minio \
   minio/minio:RELEASE.2025-09-07T16-13-09Z server /data --console-address ":9001"
 ````
 
-where we start a container named `minio`, publish ports 9000 and 9001, pass two environment variables into the container (`MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), and attach a volume `minio_data` that is mounted at `/data` inside the container. The container image is [`minio/minio:RELEASE.2025-09-07T16-13-09Z`](https://hub.docker.com/r/minio/minio:RELEASE.2025-09-07T16-13-09Z/tags), and we specify that the command 
+where we start a container named `minio`, publish ports 9000 and 9001, pass two environment variables into the container (`MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), and attach a volume `minio_data` that is mounted at `/data` inside the container. The container image is [`minio/minio`](https://hub.docker.com/r/minio/minio:RELEASE.2025-09-07T16-13-09Z/tags), and we specify that the command 
 
 ```
 server /data --console-address ":9001"
@@ -119,7 +119,7 @@ Next, we have
       fi"
 ```
 
-which creates a container that starts only once the `minio` container has passed a health check; this container uses an image with the MinIO client `mc`, `minio/mc:RELEASE.2025-08-13T08-35-41Z-cpuv1`, and it just authenticates to the `minio` server that is running on the same Docker network, then creates a storage "bucket" named `mlflow-artifacts`, and exits:
+which creates a container that starts only once the `minio` container has passed a health check; this container uses an image with the MinIO client `mc`, `minio/mc`, and it just authenticates to the `minio` server that is running on the same Docker network, then creates a storage "bucket" named `mlflow-artifacts`, and exits:
 
 ```
 mc alias set minio http://minio:9000 your-access-key your-secret-key
@@ -219,6 +219,7 @@ In addition to the three elements that make up the MLFlow tracking server system
 
 ![MLFlow experiment tracking server system.](images/5-mlflow-system.svg)
 
+Note that in this example, our ML model development and training service (Jupyter) and ML experiment tracking service (MLFlow) are on the same host. However, this is not necessary in general. It is only necessary that (1) the MLFlow instance is configured (with security groups, etc.) to accept requests on whatever ports it is using, and (2) the Jupyter instance gets the MLFlow instance hostname or IP address. Typically, the MLFlow instance would run on a cheap VM instance, while the ML development and training service might require a more expensive GPU instance. We prefer to decouple these so that we don't keep an expensive GPU instance running only to keep experiment tracking.
 
 :::
 
