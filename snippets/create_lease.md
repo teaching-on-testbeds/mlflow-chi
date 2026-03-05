@@ -63,3 +63,37 @@ Then,
 Your lease status should show as "Pending". Click on the lease to see an overview. It will show the start time and end time, and it will show the name of the physical host that is reserved for you as part of your lease. Make sure that the lease details are correct.
 
 :::
+
+::: {.cell .markdown}
+
+## Open this experiment on Trovi
+
+Since you will need the full lease time to execute your experiment, you should read *all* of the experiment material ahead of time in preparation, so that you make the best possible use of your time.
+
+When you are ready to begin, open this experiment on Trovi:
+
+:::
+
+::: {.cell .markdown .gpu-nvidia}
+
+* Use this link: [ML experiment tracking with MLFlow on Chameleon (NVIDIA)](https://trovi.chameleoncloud.org/dashboard/artifacts/aefd5288-b99c-455d-8a85-028d4aad3209) on Trovi
+
+:::
+
+::: {.cell .markdown .gpu-amd}
+
+* Use this link: [ML experiment tracking with MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4) on Trovi
+
+:::
+
+::: {.cell .markdown}
+
+* Then, click "Launch on Chameleon". This will start a new Jupyter server for you, with the experiment materials already in it.
+
+:::
+
+::: {.cell .markdown}
+
+Inside the `mlflow-chi` directory, continue with `2_create_server.ipynb`.
+
+:::

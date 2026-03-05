@@ -12,20 +12,12 @@ The MLFlow experiment is more interesting if we run it on a node with two GPUs, 
 
 We can browse Chameleon hardware configurations for suitable node types using the [Hardware Browser](https://chameleoncloud.org/hardware/). For example, to find nodes with 2x GPUs: if we expand "Advanced Filters", check the "2" box under "GPU count", and then click "View", we can identify some suitable node types.
 
-In this version of the lab, we use AMD `gpu_mi100` nodes at CHI@TACC.
+In this version, we use AMD `gpu_mi100` nodes at CHI@TACC.
 
 -   Most of the `gpu_mi100` nodes have two AMD MI100 GPUs.
--   Alternatively, to use `compute_liqid` nodes and follow the NVIDIA version of this lab, refer to the [NVIDIA instructions](index_nvidia).
-
-To use AMD instructions directly, refer to the [AMD instructions](index_amd).
+-   Alternatively, to use `compute_liqid` nodes and follow the NVIDIA version, refer to the [NVIDIA instructions](index_nvidia).
 
 Once you decide on GPU type, make sure to follow the instructions specific to that GPU type.
-
-Since you will need the full lease time to actually execute your experiment, you should read *all* of the experiment material ahead of time in preparation, so that you make the best possible use of your time.
-
-At the beginning of your lease time, continue with `1_create_lease.ipynb`, then continue with the create-server notebook for your GPU type.
-
-For AMD runs, refer to the [AMD instructions](index_amd), then continue with `1_create_server.ipynb`.
 
 ## Create a lease
 
@@ -59,11 +51,23 @@ Then,
 
 Your lease status should show as "Pending". Click on the lease to see an overview. It will show the start time and end time, and it will show the name of the physical host that is reserved for you as part of your lease. Make sure that the lease details are correct.
 
+## Open this experiment on Trovi
+
+Since you will need the full lease time to execute your experiment, you should read *all* of the experiment material ahead of time in preparation, so that you make the best possible use of your time.
+
+When you are ready to begin, open this experiment on Trovi:
+
+-   Use this link: [ML experiment tracking with MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4) on Trovi
+
+-   Then, click "Launch on Chameleon". This will start a new Jupyter server for you, with the experiment materials already in it.
+
+Inside the `mlflow-chi` directory, continue with `2_create_server.ipynb`.
+
 ## Launch and set up AMD MI100 server - with python-chi
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server.
 
-> **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `1_create_server.ipynb`.
+> **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `2_create_server.ipynb`.
 
 For the AMD version of this lab, use this Trovi artifact:
 
