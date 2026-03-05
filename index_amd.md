@@ -69,10 +69,6 @@ At the beginning of the lease time, we will bring up our GPU server. We will use
 
 > **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `2_create_server.ipynb`.
 
-For the AMD version of this lab, use this Trovi artifact:
-
--   [MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4)
-
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
 
 Run the following cell, and make sure the correct project is selected:
