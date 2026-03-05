@@ -12,12 +12,12 @@ The MLFlow experiment is more interesting if we run it on a node with two GPUs, 
 
 We can browse Chameleon hardware configurations for suitable node types using the [Hardware Browser](https://chameleoncloud.org/hardware/). For example, to find nodes with 2x GPUs: if we expand "Advanced Filters", check the "2" box under "GPU count", and then click "View", we can identify some suitable node types.
 
-We'll proceed with the `gpu_mi100` and `compute_liqid` node types at CHI@TACC.
-
-For AMD (`gpu_mi100`) instructions:
+In this version of the lab, we use AMD `gpu_mi100` nodes at CHI@TACC.
 
 -   Most of the `gpu_mi100` nodes have two AMD MI100 GPUs.
--   [Follow the AMD instructions](index_amd).
+-   Alternatively, to use `compute_liqid` nodes and follow the NVIDIA version of this lab, refer to the [NVIDIA instructions](index_nvidia).
+
+To use AMD instructions directly, refer to the [AMD instructions](index_amd).
 
 Once you decide on GPU type, make sure to follow the instructions specific to that GPU type.
 
@@ -25,7 +25,7 @@ Since you will need the full lease time to actually execute your experiment, you
 
 At the beginning of your lease time, continue with `1_create_lease.ipynb`, then continue with the create-server notebook for your GPU type.
 
-For AMD runs, [follow the AMD instructions](index_amd), then continue with `1_create_server.ipynb`.
+For AMD runs, refer to the [AMD instructions](index_amd), then continue with `1_create_server.ipynb`.
 
 ## Create a lease
 
@@ -47,7 +47,7 @@ Then,
     -   the start and end time of the time you will try to reserve. (Note that if you mouse over an existing reservation, a pop up will show you the exact start and end time of that reservation.)
     -   and the name of the node you want to reserve. (We will reserve nodes by name, not by type, to avoid getting a 1-GPU node when we wanted a 2-GPU node.)
 -   Then, on the left side, click on "Reservations" \> "Leases", and then click on "Create Lease":
-    -   set the "Name" to `<code>`{=html}mlflow\_`<b>`{=html}netID`</b>`{=html}`</code>`{=html} where in place of `<code>`{=html}`<b>`{=html}netID`</b>`{=html}`</code>`{=html} you substitute your actual net ID.
+    -   set the "Name" to `mlflow_netID`, where `netID` is your actual net ID.
     -   set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
     -   modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease five minutes before the end of an hour, e.g. at `YY:55`.
     -   Click "Next".
@@ -156,76 +156,6 @@ s.execute("sudo groupadd -f docker; sudo usermod -aG docker $USER")
 
 ## Set up the AMD GPU
 
-```{=html}
-<!--
-
-
-
-Before we can use the AMD GPUs, we need to set up the driver using the `amdgpu-install` utility. 
-
-Let's follow [AMD's instructions for setting up `amdgpu-install`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/install-methods/amdgpu-installer/amdgpu-installer-ubuntu.html#installation):
-
-
-```python
-# run in Chameleon Jupyter environment
-s.execute("sudo apt update; wget https://repo.radeon.com/amdgpu-install/6.4.4/ubuntu/noble/amdgpu-install_6.4.60404-1_all.deb")
-s.execute("sudo apt -o DPkg::Options::='--force-confnew' -y install ./amdgpu-install_6.4.60404-1_all.deb; sudo apt update")
-```
-
-
-
-To [run containers using ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html) (Radeon Open Compute Platform), an open-source software stack from AMD that allows users to program AMD GPUs (similar to NVIDIA's CUDA), we need to install the `amdgpu-dkms` driver:
-
-
-
-```python
-# run in Chameleon Jupyter environment
-s.execute("amdgpu-install -y --usecase=dkms")
-```
-
-
-And, we'll also install the `rocm-smi` utility, so that we can monitor the GPU from the host:
-
-
-
-```python
-# run in Chameleon Jupyter environment
-s.execute("sudo apt -y install rocm-smi")
-```
-
-
-Finally, we will add the `cc` user to the `video` and `render` groups, which are needed for access to the GPU:
-
-
-
-```python
-# run in Chameleon Jupyter environment
-s.execute("sudo usermod -aG video,render $USER")
-```
-
-
-
-That's all we will need on the host - the rest of ROCm will be installed inside the containers. 
-
-To apply the changes to the kernel, we need to reboot, and wait for the server to come back up.
-
-
-
-```python
-# run in Chameleon Jupyter environment
-s.execute("sudo reboot")
-time.sleep(30)
-```
-
-
-```python
-# run in Chameleon Jupyter environment
-s.refresh()
-s.check_connectivity()
-```
-
--->
-```
 Run
 
 ``` python

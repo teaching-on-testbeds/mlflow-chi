@@ -12,12 +12,12 @@ The MLFlow experiment is more interesting if we run it on a node with two GPUs, 
 
 We can browse Chameleon hardware configurations for suitable node types using the [Hardware Browser](https://chameleoncloud.org/hardware/). For example, to find nodes with 2x GPUs: if we expand "Advanced Filters", check the "2" box under "GPU count", and then click "View", we can identify some suitable node types.
 
-We'll proceed with the `gpu_mi100` and `compute_liqid` node types at CHI@TACC.
-
-For NVIDIA (`compute_liqid`) instructions:
+In this version of the lab, we use NVIDIA `compute_liqid` nodes at CHI@TACC.
 
 -   The `compute_liqid` nodes at CHI@TACC have one or two NVIDIA A100 40GB GPUs. As of this writing, `liqid01` and `liqid02` have two GPUs.
--   [Follow the NVIDIA instructions](index_nvidia).
+-   Alternatively, to use `gpu_mi100` nodes and follow the AMD version of this lab, refer to the [AMD instructions](index_amd).
+
+To use NVIDIA instructions directly, refer to the [NVIDIA instructions](index_nvidia).
 
 Once you decide on GPU type, make sure to follow the instructions specific to that GPU type.
 
@@ -25,7 +25,7 @@ Since you will need the full lease time to actually execute your experiment, you
 
 At the beginning of your lease time, continue with `1_create_lease.ipynb`, then continue with the create-server notebook for your GPU type.
 
-For NVIDIA runs, [follow the NVIDIA instructions](index_nvidia), then continue with `1_create_server.ipynb`.
+For NVIDIA runs, refer to the [NVIDIA instructions](index_nvidia), then continue with `1_create_server.ipynb`.
 
 ## Create a lease
 
@@ -47,7 +47,7 @@ Then,
     -   the start and end time of the time you will try to reserve. (Note that if you mouse over an existing reservation, a pop up will show you the exact start and end time of that reservation.)
     -   and the name of the node you want to reserve. (We will reserve nodes by name, not by type, to avoid getting a 1-GPU node when we wanted a 2-GPU node.)
 -   Then, on the left side, click on "Reservations" \> "Leases", and then click on "Create Lease":
-    -   set the "Name" to `<code>`{=html}mlflow\_`<b>`{=html}netID`</b>`{=html}`</code>`{=html} where in place of `<code>`{=html}`<b>`{=html}netID`</b>`{=html}`</code>`{=html} you substitute your actual net ID.
+    -   set the "Name" to `mlflow_netID`, where `netID` is your actual net ID.
     -   set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
     -   modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease five minutes before the end of an hour, e.g. at `YY:55`.
     -   Click "Next".
