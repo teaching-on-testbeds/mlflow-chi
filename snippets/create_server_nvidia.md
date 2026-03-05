@@ -7,7 +7,7 @@
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server. 
 
-> **Note**: if you reserved an AMD GPU server, [follow the AMD instructions](index_amd), then open `1_create_server.ipynb`.
+> **Note**: if you reserved an AMD GPU server, [follow the AMD instructions](index_amd), then open `2_create_server.ipynb`.
 
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.

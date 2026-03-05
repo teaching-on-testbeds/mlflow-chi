@@ -6,7 +6,7 @@
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server. 
 
-> **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `1_create_server.ipynb`.
+> **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `2_create_server.ipynb`.
 
 For the AMD version of this lab, use this Trovi artifact:
 
