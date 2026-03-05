@@ -153,7 +153,7 @@ For AMD runs, automatic GPU metrics logging uses `pyrsmi`, and we include `rocm-
 
 :::
 
-::: {.cell .markdown .gpu-nvidia}
+::: {.cell .markdown .gpu-nvidia .gpu-vm}
 
 For NVIDIA runs, automatic GPU metrics logging uses `pynvml`, and we include `nvidia-smi` output as a text artifact.
 

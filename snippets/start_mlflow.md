@@ -334,7 +334,7 @@ Here,
 
 :::
 
-::: {.cell .markdown .gpu-nvidia}
+::: {.cell .markdown .gpu-nvidia .gpu-vm}
 
 For NVIDIA GPU instances (like `compute_liqid`), run
 

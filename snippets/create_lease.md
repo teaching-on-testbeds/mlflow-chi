@@ -3,22 +3,20 @@
 
 ## Create a lease
 
-To use bare metal resources on Chameleon, we must reserve them in advance. We can reserve a 3-hour block for this experiment.
+To use GPU resources on Chameleon, we must reserve them in advance. We can reserve a 3-hour block for this experiment.
 
-We can use the OpenStack graphical user interface, Horizon, to submit a lease at CHI@TACC. To access this interface,
-
-* from the [Chameleon website](https://chameleoncloud.org/hardware/)
-* click "Experiment" > "CHI@TACC"
-* log in if prompted to do so
-* check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
+We can use the OpenStack graphical user interface, Horizon, to submit a lease.
 
 :::
 
 ::: {.cell .markdown .gpu-amd}
 
-For AMD instructions, reserve a `gpu_mi100` node.
-
 Then,
+
+* from the [Chameleon website](https://chameleoncloud.org/hardware/)
+* click "Experiment" > "CHI@TACC"
+* log in if prompted to do so
+* check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
 
 * On the left side, click on "Reservations" > "Leases", and then click on "Host Calendar". In the "Node type" drop down menu, change the type to `gpu_mi100` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC. You can use [WolframAlpha](https://www.wolframalpha.com/) or equivalent to convert to your local time zone.
 * Once you have identified an available three-hour block in UTC time that works for you in your local time zone, make a note of:
@@ -27,7 +25,7 @@ Then,
 * Then, on the left side, click on "Reservations" > "Leases", and then click on "Create Lease":
   * set the "Name" to `mlflow_netID`, where `netID` is your actual net ID.
   * set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
-  * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease five minutes before the end of an hour, e.g. at `YY:55`.
+  * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease ten minutes before the end of an hour, e.g. at `YY:50`.
   * Click "Next".
 * On the "Hosts" tab,
   * check the "Reserve hosts" box
@@ -41,9 +39,12 @@ Your lease status should show as "Pending". Click on the lease to see an overvie
 
 ::: {.cell .markdown .gpu-nvidia}
 
-For NVIDIA instructions, reserve a `compute_liqid` node.
-
 Then,
+
+* from the [Chameleon website](https://chameleoncloud.org/hardware/)
+* click "Experiment" > "CHI@TACC"
+* log in if prompted to do so
+* check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
 
 * On the left side, click on "Reservations" > "Leases", and then click on "Host Calendar". In the "Node type" drop down menu, change the type to `compute_liqid` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC. You can use [WolframAlpha](https://www.wolframalpha.com/) or equivalent to convert to your local time zone.
 * Once you have identified an available three-hour block in UTC time that works for you in your local time zone, make a note of:
@@ -52,7 +53,7 @@ Then,
 * Then, on the left side, click on "Reservations" > "Leases", and then click on "Create Lease":
   * set the "Name" to `mlflow_netID`, where `netID` is your actual net ID.
   * set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
-  * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease five minutes before the end of an hour, e.g. at `YY:55`.
+  * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease ten minutes before the end of an hour, e.g. at `YY:50`.
   * Click "Next".
 * On the "Hosts" tab,
   * check the "Reserve hosts" box
@@ -61,6 +62,35 @@ Then,
 * Click "Next". Then, click "Create". (We won't include any network resources in this lease.)
 
 Your lease status should show as "Pending". Click on the lease to see an overview. It will show the start time and end time, and it will show the name of the physical host that is reserved for you as part of your lease. Make sure that the lease details are correct.
+
+:::
+
+::: {.cell .markdown .gpu-vm}
+
+Then,
+
+* from the [Chameleon website](https://chameleoncloud.org/hardware/)
+* click "Experiment" > "KVM@TACC"
+* log in if prompted to do so
+* check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
+
+Reserve a 2 hr 50 minute block on a node with a single H100 GPU. This flavor is named `g1.h100.pci.1` on KVM@TACC.
+
+* On the left side, click on "Reservations" > "Leases", and then click on "Flavor Calendar". In the "Node type" drop down menu, change the type to `g1.h100.pci.1` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC, so you will need to convert to your local time zone.
+* Once you have identified a 2 hr 50 minute block in UTC time that has GPU availability and works for you in your local time zone, make a note of the start and end time of the time you will try to reserve. (Note that if you mouse over a point on the graph, a pop up will show you the exact time.)
+* Then, on the left side, click on "Leases" again and then "Create Lease":
+  * set the "Name" to `mlflow_netID`, where `netID` is your actual net ID.
+  * set the start date and time in UTC.
+  * modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time as directed.
+  * Click "Next".
+* On the "Flavors" tab,
+  * check the "Reserve Flavors" box
+  * let "Number of Instances for Flavor" be 1
+  * and click "Select" next to `g1.h100.pci.1`
+  * then click "Next".
+* Then, click "Create". (We won't include any network resources in this lease.)
+
+Your lease status should show as "Pending". If you click on the lease, you can see an overview, including the start time and end time and some more details about the instance flavor you have reserved.
 
 :::
 
@@ -83,6 +113,12 @@ When you are ready to begin, open this experiment on Trovi:
 ::: {.cell .markdown .gpu-amd}
 
 * Use this link: [ML experiment tracking with MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4) on Trovi
+
+:::
+
+::: {.cell .markdown .gpu-vm}
+
+* Use this link: [ML experiment tracking with MLFlow on Chameleon (VM H100)](https://trovi.chameleoncloud.org/dashboard/artifacts/0f7d4c62-a65a-4571-9b45-16b692af3ee2) on Trovi
 
 :::
 

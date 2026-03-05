@@ -4,13 +4,14 @@ FILTER := filters/gpu_select.lua
 INDEX_OUT := index.md
 INDEX_NVIDIA_OUT := index_nvidia.md
 INDEX_AMD_OUT := index_amd.md
+INDEX_VM_OUT := index_vm.md
 CREATE_SERVER_OUT := 2_create_server.ipynb
 
-.PHONY: all build amd nvidia clean validate-gpu
+.PHONY: all build amd nvidia vm clean validate-gpu
 
 all: build
 
-build: validate-gpu $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) $(INDEX_OUT) 0_intro.ipynb 1_create_lease.ipynb $(CREATE_SERVER_OUT) 3_prepare_data.ipynb 4_start_mlflow.ipynb 5_mlflow_track_torch.ipynb 6_mlflow_track_lightning.ipynb 7_mlflow_api.ipynb workspace_mlflow/mlflow_api.ipynb
+build: validate-gpu $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) $(INDEX_VM_OUT) $(INDEX_OUT) 0_intro.ipynb 1_create_lease.ipynb $(CREATE_SERVER_OUT) 3_prepare_data.ipynb 4_start_mlflow.ipynb 5_mlflow_track_torch.ipynb 6_mlflow_track_lightning.ipynb 7_mlflow_api.ipynb workspace_mlflow/mlflow_api.ipynb
 
 amd:
 	$(MAKE) build GPU=amd
@@ -18,9 +19,12 @@ amd:
 nvidia:
 	$(MAKE) build GPU=nvidia
 
+vm:
+	$(MAKE) build GPU=vm
+
 validate-gpu:
-	@if [ "$(GPU)" != "nvidia" ] && [ "$(GPU)" != "amd" ]; then \
-		echo "Unsupported GPU '$(GPU)'. Use GPU=nvidia or GPU=amd."; \
+	@if [ "$(GPU)" != "nvidia" ] && [ "$(GPU)" != "amd" ] && [ "$(GPU)" != "vm" ]; then \
+		echo "Unsupported GPU '$(GPU)'. Use GPU=nvidia, GPU=amd, or GPU=vm."; \
 		exit 1; \
 	fi
 
@@ -56,7 +60,23 @@ $(INDEX_AMD_OUT): snippets/intro.md snippets/create_lease.md snippets/create_ser
 	rm index.amd.tmp.md index.amd.filtered.md
 	cat snippets/footer.md >> $(INDEX_AMD_OUT)
 
-$(INDEX_OUT): $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) validate-gpu
+$(INDEX_VM_OUT): snippets/intro.md snippets/create_lease.md snippets/create_server_vm.md snippets/prepare_data.md snippets/start_mlflow.md snippets/mlflow_track_torch.md snippets/mlflow_track_lightning.md snippets/mlflow_api.md snippets/footer.md $(FILTER)
+	cat snippets/intro.md \
+		snippets/create_lease.md \
+		snippets/create_server_vm.md \
+		snippets/prepare_data.md \
+		snippets/start_mlflow.md \
+		snippets/mlflow_track_torch.md \
+		snippets/mlflow_track_lightning.md \
+		snippets/mlflow_api.md \
+		> index.vm.tmp.md
+	GPU=vm pandoc --standalone --wrap=none --lua-filter $(FILTER) --from markdown --to markdown \
+		-o index.vm.filtered.md index.vm.tmp.md
+	grep -v '^:::' index.vm.filtered.md > $(INDEX_VM_OUT)
+	rm index.vm.tmp.md index.vm.filtered.md
+	cat snippets/footer.md >> $(INDEX_VM_OUT)
+
+$(INDEX_OUT): $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) $(INDEX_VM_OUT) validate-gpu
 	cp index_$(GPU).md $(INDEX_OUT)
 
 0_intro.ipynb: snippets/intro.md $(FILTER) validate-gpu
@@ -71,10 +91,14 @@ $(INDEX_OUT): $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) validate-gpu
 		-o 1_create_lease.ipynb
 	sed -i 's/attachment://g' 1_create_lease.ipynb
 
-2_create_server.ipynb: snippets/create_server_amd.md snippets/create_server_nvidia.md validate-gpu
+2_create_server.ipynb: snippets/create_server_amd.md snippets/create_server_nvidia.md snippets/create_server_vm.md validate-gpu
 	@if [ "$(GPU)" = "amd" ]; then \
 		pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
 			-i snippets/frontmatter_python.md snippets/create_server_amd.md \
+			-o 2_create_server.ipynb; \
+	elif [ "$(GPU)" = "vm" ]; then \
+		pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
+			-i snippets/frontmatter_python.md snippets/create_server_vm.md \
 			-o 2_create_server.ipynb; \
 	else \
 		pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
@@ -120,7 +144,7 @@ workspace_mlflow/mlflow_api.ipynb: snippets/mlflow_api.md
 	sed -i 's/attachment://g' workspace_mlflow/mlflow_api.ipynb
 
 clean:
-	rm -f index.md index_nvidia.md index_amd.md \
+	rm -f index.md index_nvidia.md index_amd.md index_vm.md \
 		0_intro.ipynb \
 		1_create_lease.ipynb \
 		2_create_server.ipynb \
