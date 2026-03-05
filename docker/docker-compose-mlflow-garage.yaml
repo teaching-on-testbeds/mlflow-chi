@@ -53,6 +53,7 @@ services:
         condition: service_completed_successfully
     environment:
       MLFLOW_TRACKING_URI: http://0.0.0.0:8000
+      MLFLOW_LOGGING_LEVEL: ERROR
       MLFLOW_S3_ENDPOINT_URL: http://garage:3900  # how mlflow will access object store
       MLFLOW_SERVER_ALLOWED_HOSTS: "*"
     volumes:

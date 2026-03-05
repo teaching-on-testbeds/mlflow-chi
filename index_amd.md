@@ -14,10 +14,10 @@ We can browse Chameleon hardware configurations for suitable node types using th
 
 We'll proceed with the `gpu_mi100` and `compute_liqid` node types at CHI@TACC.
 
-For NVIDIA (`compute_liqid`) instructions:
+For AMD (`gpu_mi100`) instructions:
 
--   The `compute_liqid` nodes at CHI@TACC have one or two NVIDIA A100 40GB GPUs. As of this writing, `liqid01` and `liqid02` have two GPUs.
--   [Follow the NVIDIA instructions](index_nvidia).
+-   Most of the `gpu_mi100` nodes have two AMD MI100 GPUs.
+-   [Follow the AMD instructions](index_amd).
 
 Once you decide on GPU type, make sure to follow the instructions specific to that GPU type.
 
@@ -25,7 +25,7 @@ Since you will need the full lease time to actually execute your experiment, you
 
 At the beginning of your lease time, continue with `1_create_lease.ipynb`, then continue with the create-server notebook for your GPU type.
 
-For NVIDIA runs, [follow the NVIDIA instructions](index_nvidia), then continue with `1_create_server.ipynb`.
+For AMD runs, [follow the AMD instructions](index_amd), then continue with `1_create_server.ipynb`.
 
 ## Create a lease
 
@@ -38,11 +38,11 @@ We can use the OpenStack graphical user interface, Horizon, to submit a lease at
 -   log in if prompted to do so
 -   check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
 
-For NVIDIA instructions, reserve a `compute_liqid` node.
+For AMD instructions, reserve a `gpu_mi100` node.
 
 Then,
 
--   On the left side, click on "Reservations" \> "Leases", and then click on "Host Calendar". In the "Node type" drop down menu, change the type to `compute_liqid` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC. You can use [WolframAlpha](https://www.wolframalpha.com/) or equivalent to convert to your local time zone.
+-   On the left side, click on "Reservations" \> "Leases", and then click on "Host Calendar". In the "Node type" drop down menu, change the type to `gpu_mi100` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC. You can use [WolframAlpha](https://www.wolframalpha.com/) or equivalent to convert to your local time zone.
 -   Once you have identified an available three-hour block in UTC time that works for you in your local time zone, make a note of:
     -   the start and end time of the time you will try to reserve. (Note that if you mouse over an existing reservation, a pop up will show you the exact start and end time of that reservation.)
     -   and the name of the node you want to reserve. (We will reserve nodes by name, not by type, to avoid getting a 1-GPU node when we wanted a 2-GPU node.)
@@ -59,11 +59,15 @@ Then,
 
 Your lease status should show as "Pending". Click on the lease to see an overview. It will show the start time and end time, and it will show the name of the physical host that is reserved for you as part of your lease. Make sure that the lease details are correct.
 
-## Launch and set up NVIDIA A100 40GB server - with python-chi
+## Launch and set up AMD MI100 server - with python-chi
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server.
 
-> **Note**: if you reserved an AMD GPU server, [follow the AMD instructions](index_amd), then open `1_create_server.ipynb`.
+> **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `1_create_server.ipynb`.
+
+For the AMD version of this lab, use this Trovi artifact:
+
+-   [MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4)
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
 
@@ -72,7 +76,7 @@ Run the following cell, and make sure the correct project is selected:
 ``` python
 # run in Chameleon Jupyter environment
 from chi import server, context, lease
-import os
+import os, time
 
 context.version = "1.0" 
 context.choose_project()
@@ -93,7 +97,7 @@ The rest of this notebook can be executed without any interactions from you, so 
 
 As the notebook executes, monitor its progress to make sure it does not get stuck on any execution error, and also to see what it is doing!
 
-We will use the lease to bring up a server with the `CC-Ubuntu24.04-CUDA` disk image.
+We will use the lease to bring up a server with the `CC-Ubuntu24.04-ROCm` disk image. (The default Ubuntu 24.04 kernel is not compatible with the AMD GPU on these nodes.)
 
 > **Note**: the following cell brings up a server only if you don't already have one with the same name! (Regardless of its error state.) If you have a server in ERROR state already, delete it first in the Horizon GUI before you run this cell.
 
@@ -103,7 +107,7 @@ username = os.getenv('USER') # all exp resources will have this prefix
 s = server.Server(
     f"node-mlflow-{username}", 
     reservation_id=l.node_reservations[0]["id"],
-    image_name="CC-Ubuntu24.04-CUDA"
+    image_name="CC-Ubuntu24.04-ROCm"
 )
 s.submit(idempotent=True)
 ```
@@ -137,7 +141,7 @@ Now, we can use `python-chi` to execute commands on the instance, to set it up. 
 
 ``` python
 # run in Chameleon Jupyter environment
-s.execute("git clone --branch main --single-branch https://github.com/teaching-on-testbeds/mlflow-chi")
+s.execute("git clone --branch amd --single-branch https://github.com/teaching-on-testbeds/mlflow-chi")
 ```
 
 ## Set up Docker
@@ -150,30 +154,94 @@ s.execute("curl -sSL https://get.docker.com/ | sudo sh")
 s.execute("sudo groupadd -f docker; sudo usermod -aG docker $USER")
 ```
 
-## Set up the NVIDIA container toolkit
+## Set up the AMD GPU
 
-We will also install the NVIDIA container toolkit, with which we can access GPUs from inside our containers.
+```{=html}
+<!--
 
-``` python
+
+
+Before we can use the AMD GPUs, we need to set up the driver using the `amdgpu-install` utility. 
+
+Let's follow [AMD's instructions for setting up `amdgpu-install`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/install-methods/amdgpu-installer/amdgpu-installer-ubuntu.html#installation):
+
+
+```python
 # run in Chameleon Jupyter environment
-s.execute("curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list")
-s.execute("sudo apt update")
-s.execute("sudo apt-get install -y nvidia-container-toolkit")
-s.execute("sudo nvidia-ctk runtime configure --runtime=docker")
-# for https://github.com/NVIDIA/nvidia-container-toolkit/issues/48
-s.execute("sudo jq 'if has(\"exec-opts\") then . else . + {\"exec-opts\": [\"native.cgroupdriver=cgroupfs\"]} end' /etc/docker/daemon.json | sudo tee /etc/docker/daemon.json.tmp > /dev/null && sudo mv /etc/docker/daemon.json.tmp /etc/docker/daemon.json")
-s.execute("sudo systemctl restart docker")
+s.execute("sudo apt update; wget https://repo.radeon.com/amdgpu-install/6.4.4/ubuntu/noble/amdgpu-install_6.4.60404-1_all.deb")
+s.execute("sudo apt -o DPkg::Options::='--force-confnew' -y install ./amdgpu-install_6.4.60404-1_all.deb; sudo apt update")
 ```
 
-and we can install `nvtop` to monitor GPU usage:
+
+
+To [run containers using ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html) (Radeon Open Compute Platform), an open-source software stack from AMD that allows users to program AMD GPUs (similar to NVIDIA's CUDA), we need to install the `amdgpu-dkms` driver:
+
+
+
+```python
+# run in Chameleon Jupyter environment
+s.execute("amdgpu-install -y --usecase=dkms")
+```
+
+
+And, we'll also install the `rocm-smi` utility, so that we can monitor the GPU from the host:
+
+
+
+```python
+# run in Chameleon Jupyter environment
+s.execute("sudo apt -y install rocm-smi")
+```
+
+
+Finally, we will add the `cc` user to the `video` and `render` groups, which are needed for access to the GPU:
+
+
+
+```python
+# run in Chameleon Jupyter environment
+s.execute("sudo usermod -aG video,render $USER")
+```
+
+
+
+That's all we will need on the host - the rest of ROCm will be installed inside the containers. 
+
+To apply the changes to the kernel, we need to reboot, and wait for the server to come back up.
+
+
+
+```python
+# run in Chameleon Jupyter environment
+s.execute("sudo reboot")
+time.sleep(30)
+```
+
+
+```python
+# run in Chameleon Jupyter environment
+s.refresh()
+s.check_connectivity()
+```
+
+-->
+```
+Run
 
 ``` python
 # run in Chameleon Jupyter environment
-s.execute("sudo apt update")
-s.execute("sudo apt -y install nvtop")
+s.execute("rocm-smi")
+```
+
+and verify that you can see the GPU(s).
+
+We can also install `nvtop` to monitor GPU usage - we'll install from source, because the older version in the Ubuntu package repositories does not support AMD GPUs:
+
+``` python
+# run in Chameleon Jupyter environment
+s.execute("sudo apt -y install cmake libncurses-dev libsystemd-dev libudev-dev libdrm-dev libgtest-dev")
+s.execute("git clone https://github.com/Syllo/nvtop")
+s.execute("mkdir -p nvtop/build && cd nvtop/build && cmake .. -DAMDGPU_SUPPORT=ON && sudo make install")
 ```
 
 ### Build a container image for MLFlow
@@ -182,16 +250,16 @@ Finally, we will build a container image in which to work on the MLFlow experime
 
 -   a Jupyter notebook server
 -   Pytorch and Pytorch Lightning
--   CUDA, which allows deep learning frameworks like Pytorch to use the NVIDIA GPU accelerator
+-   ROCm, which allows deep learning frameworks like Pytorch to use the AMD GPU accelerator
 -   and MLFlow
 
-You can see our Dockerfile for this image at: [Dockerfile.jupyter-torch-mlflow-cuda](https://github.com/teaching-on-testbeds/mlflow-chi/tree/main/docker/Dockerfile.jupyter-torch-mlflow-cuda)
+You can see our Dockerfile for this image at: [Dockerfile.jupyter-torch-mlflow-rocm](https://github.com/teaching-on-testbeds/mlflow-chi/tree/main/docker/Dockerfile.jupyter-torch-mlflow-rocm)
 
-Building this container may take a bit of time, but that's OK: we can get it started and then continue to the next section while it builds in the background, since we don't need this container immediately.
+Building this container will take a **very long** time (ROCm is huge). But that's OK: we can get it started and then continue to the next section while it builds in the background, since we don't need this container immediately. We just need it to finish by the "Start a Jupyter server" subsection of the "Start the tracking server" section.
 
 ``` python
 # run in Chameleon Jupyter environment
-s.execute("docker build -t jupyter-mlflow -f mlflow-chi/docker/Dockerfile.jupyter-torch-mlflow-cuda .")
+s.execute("docker build -t jupyter-mlflow -f mlflow-chi/docker/Dockerfile.jupyter-torch-mlflow-rocm .")
 ```
 
 Leave that cell running, and in the meantime, open an SSH sesson on your server. From your local terminal, run
@@ -475,13 +543,14 @@ Finally, we'll start the Jupyter server container, inside which we will run expe
 docker image list
 ```
 
-For NVIDIA GPU instances (like `compute_liqid`), run
+For AMD GPU instances (like `gpu_mi100`), run
 
 ``` bash
 # run on node-mlflow
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
-    --gpus all \
+    --device=/dev/kfd --device=/dev/dri \
+    --group-add video --group-add $(getent group | grep render | cut -d':' -f 3) \
     --shm-size 16G \
     -v ~/mlflow-chi/workspace_mlflow:/home/jovyan/work/ \
     -v food11:/mnt/ \
@@ -493,10 +562,13 @@ docker run  -d --rm  -p 8888:8888 \
 
 Note that we intially get `HOST_IP`, the floating IP assigned to your instance, as a variable; then we use it to specify the `MLFLOW_TRACKING_URI` inside the container. Training jobs inside the container will access the MLFlow tracking server using its public IP address.
 
+Here,
+
 -   `-d` says to start the container and detach, leaving it running in the background
 -   `-rm` says that after we stop the container, it should be removed immediately, instead of leaving it around for potential debugging
 -   `-p 8888:8888` says to publish the container's port `8888` (the second `8888` in the argument) to the host port `8888` (the first `8888` in the argument)
--   `--gpus all` pass the NVIDIA GPUs to the container
+-   `--device=/dev/kfd --device=/dev/dri` pass the AMD GPUs to the container
+-   `--group-add video --group-add $(getent group | grep render | cut -d':' -f 3)` makes sure that the user inside the container is a member of a group that has permission to use the GPU(s) - the `video` group and the `render` group. (The `video` group always has the same group ID, by convention, but [the `render` group does not](https://github.com/ROCm/ROCm-docker/issues/90), so we need to find out its group ID on the host and pass that to the container.)
 -   `--shm-size 16G` increases the memory available for interprocess communication
 -   the host directory `~/mlflow-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
 -   the volume `food11` is mounted inside the workspace as `/mnt/`
@@ -651,7 +723,7 @@ block, since we are going to interrupt training runs with Ctrl+C, and without "g
 
 Also, when we called `start_run`, we passed a `log_system_metrics=True` argument. This directs MLFlow to automatically start tracking and logging details of the host on which the experiment is running: CPU utilization and memory, GPU utilization and memory, etc.
 
-For NVIDIA runs, automatic GPU metrics logging uses `pynvml`, and we include `nvidia-smi` output as a text artifact.
+For AMD runs, automatic GPU metrics logging uses `pyrsmi`, and we include `rocm-smi` output as a text artifact.
 
 Besides for the details that are tracked automatically, we also decided to capture GPU information output and save it as a text file in the tracking server. This type of logged item is called an artifact - unlike some of the other data that we track, which is more structured, an artifact can be any kind of file.
 

@@ -1,92 +1,134 @@
-all: \
-	index.md \
-	0_intro.ipynb \
-	1_create_server_amd.ipynb \
-	1_create_server_nvidia.ipynb \
-	2_prepare_data.ipynb \
-	3_start_mlflow.ipynb \
-	4_mlflow_track_torch.ipynb \
-	5_mlflow_track_lightning.ipynb \
-	6_mlflow_api.ipynb \
-	workspace_mlflow/mlflow_api.ipynb
+GPU ?= nvidia
 
-clean: 
-	rm index.md \
-	0_intro.ipynb \
-	1_create_server_amd.ipynb \
-	1_create_server_nvidia.ipynb \
-	2_prepare_data.ipynb \
-	3_start_mlflow.ipynb \
-	4_mlflow_track_torch.ipynb \
-	5_mlflow_track_lightning.ipynb \
-	6_mlflow_api.ipynb \
-	workspace_mlflow/mlflow_api.ipynb
+FILTER := filters/gpu_select.lua
+INDEX_OUT := index.md
+INDEX_NVIDIA_OUT := index_nvidia.md
+INDEX_AMD_OUT := index_amd.md
+CREATE_SERVER_OUT := 1_create_server.ipynb
 
-index.md: snippets/*.md 
+.PHONY: all build amd nvidia clean validate-gpu
+
+all: build
+
+build: validate-gpu $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) $(INDEX_OUT) 0_intro.ipynb 1_create_lease.ipynb $(CREATE_SERVER_OUT) 2_prepare_data.ipynb 3_start_mlflow.ipynb 4_mlflow_track_torch.ipynb 5_mlflow_track_lightning.ipynb 6_mlflow_api.ipynb workspace_mlflow/mlflow_api.ipynb
+
+amd:
+	$(MAKE) build GPU=amd
+
+nvidia:
+	$(MAKE) build GPU=nvidia
+
+validate-gpu:
+	@if [ "$(GPU)" != "nvidia" ] && [ "$(GPU)" != "amd" ]; then \
+		echo "Unsupported GPU '$(GPU)'. Use GPU=nvidia or GPU=amd."; \
+		exit 1; \
+	fi
+
+$(INDEX_NVIDIA_OUT): snippets/intro.md snippets/create_lease.md snippets/create_server_nvidia.md snippets/prepare_data.md snippets/start_mlflow.md snippets/mlflow_track_torch.md snippets/mlflow_track_lightning.md snippets/mlflow_api.md snippets/footer.md $(FILTER)
 	cat snippets/intro.md \
-		snippets/create_server_options.md \
+		snippets/create_lease.md \
+		snippets/create_server_nvidia.md \
 		snippets/prepare_data.md \
 		snippets/start_mlflow.md \
 		snippets/mlflow_track_torch.md \
 		snippets/mlflow_track_lightning.md \
 		snippets/mlflow_api.md \
-		> index.tmp.md
-	grep -v '^:::' index.tmp.md > index.md
-	rm index.tmp.md
-	cat snippets/footer.md >> index.md
+		> index.nvidia.tmp.md
+	GPU=nvidia pandoc --standalone --wrap=none --lua-filter $(FILTER) --from markdown --to markdown \
+		-o index.nvidia.filtered.md index.nvidia.tmp.md
+	grep -v '^:::' index.nvidia.filtered.md > $(INDEX_NVIDIA_OUT)
+	rm index.nvidia.tmp.md index.nvidia.filtered.md
+	cat snippets/footer.md >> $(INDEX_NVIDIA_OUT)
 
-0_intro.ipynb: snippets/intro.md
-	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-                -i snippets/frontmatter_python.md snippets/intro.md \
-                -o 0_intro.ipynb  
+$(INDEX_AMD_OUT): snippets/intro.md snippets/create_lease.md snippets/create_server_amd.md snippets/prepare_data.md snippets/start_mlflow.md snippets/mlflow_track_torch.md snippets/mlflow_track_lightning.md snippets/mlflow_api.md snippets/footer.md $(FILTER)
+	cat snippets/intro.md \
+		snippets/create_lease.md \
+		snippets/create_server_amd.md \
+		snippets/prepare_data.md \
+		snippets/start_mlflow.md \
+		snippets/mlflow_track_torch.md \
+		snippets/mlflow_track_lightning.md \
+		snippets/mlflow_api.md \
+		> index.amd.tmp.md
+	GPU=amd pandoc --standalone --wrap=none --lua-filter $(FILTER) --from markdown --to markdown \
+		-o index.amd.filtered.md index.amd.tmp.md
+	grep -v '^:::' index.amd.filtered.md > $(INDEX_AMD_OUT)
+	rm index.amd.tmp.md index.amd.filtered.md
+	cat snippets/footer.md >> $(INDEX_AMD_OUT)
+
+$(INDEX_OUT): $(INDEX_NVIDIA_OUT) $(INDEX_AMD_OUT) validate-gpu
+	cp index_$(GPU).md $(INDEX_OUT)
+
+0_intro.ipynb: snippets/intro.md $(FILTER) validate-gpu
+	GPU=$(GPU) pandoc --resource-path=../ --embed-resources --standalone --wrap=none --lua-filter $(FILTER) \
+		-i snippets/frontmatter_python.md snippets/intro.md \
+		-o 0_intro.ipynb
 	sed -i 's/attachment://g' 0_intro.ipynb
 
+1_create_lease.ipynb: snippets/create_lease.md $(FILTER) validate-gpu
+	GPU=$(GPU) pandoc --resource-path=../ --embed-resources --standalone --wrap=none --lua-filter $(FILTER) \
+		-i snippets/frontmatter_python.md snippets/create_lease.md \
+		-o 1_create_lease.ipynb
+	sed -i 's/attachment://g' 1_create_lease.ipynb
 
-1_create_server_amd.ipynb: snippets/create_server_amd.md
-	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-                -i snippets/frontmatter_python.md snippets/create_server_amd.md \
-                -o 1_create_server_amd.ipynb  
-	sed -i 's/attachment://g' 1_create_server_amd.ipynb
-
-1_create_server_nvidia.ipynb: snippets/create_server_nvidia.md
-	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-                -i snippets/frontmatter_python.md snippets/create_server_nvidia.md \
-                -o 1_create_server_nvidia.ipynb  
-	sed -i 's/attachment://g' 1_create_server_nvidia.ipynb
+1_create_server.ipynb: snippets/create_server_amd.md snippets/create_server_nvidia.md validate-gpu
+	@if [ "$(GPU)" = "amd" ]; then \
+		pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
+			-i snippets/frontmatter_python.md snippets/create_server_amd.md \
+			-o 1_create_server.ipynb; \
+	else \
+		pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
+			-i snippets/frontmatter_python.md snippets/create_server_nvidia.md \
+			-o 1_create_server.ipynb; \
+	fi
+	sed -i 's/attachment://g' 1_create_server.ipynb
 
 2_prepare_data.ipynb: snippets/prepare_data.md
 	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-                -i snippets/frontmatter_python.md snippets/prepare_data.md \
-                -o 2_prepare_data.ipynb  
+		-i snippets/frontmatter_python.md snippets/prepare_data.md \
+		-o 2_prepare_data.ipynb
 	sed -i 's/attachment://g' 2_prepare_data.ipynb
 
-
-3_start_mlflow.ipynb: snippets/start_mlflow.md
-	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-				-i snippets/frontmatter_python.md snippets/start_mlflow.md \
-				-o 3_start_mlflow.ipynb  
+3_start_mlflow.ipynb: snippets/start_mlflow.md $(FILTER) validate-gpu
+	GPU=$(GPU) pandoc --resource-path=../ --embed-resources --standalone --wrap=none --lua-filter $(FILTER) \
+		-i snippets/frontmatter_python.md snippets/start_mlflow.md \
+		-o 3_start_mlflow.ipynb
 	sed -i 's/attachment://g' 3_start_mlflow.ipynb
 
-4_mlflow_track_torch.ipynb: snippets/mlflow_track_torch.md
-	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-				-i snippets/frontmatter_python.md snippets/mlflow_track_torch.md \
-				-o 4_mlflow_track_torch.ipynb  
+4_mlflow_track_torch.ipynb: snippets/mlflow_track_torch.md $(FILTER) validate-gpu
+	GPU=$(GPU) pandoc --resource-path=../ --embed-resources --standalone --wrap=none --lua-filter $(FILTER) \
+		-i snippets/frontmatter_python.md snippets/mlflow_track_torch.md \
+		-o 4_mlflow_track_torch.ipynb
 	sed -i 's/attachment://g' 4_mlflow_track_torch.ipynb
 
-5_mlflow_track_lightning.ipynb: snippets/mlflow_track_torch.md
+5_mlflow_track_lightning.ipynb: snippets/mlflow_track_lightning.md
 	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-				-i snippets/frontmatter_python.md snippets/mlflow_track_lightning.md \
-				-o 5_mlflow_track_lightning.ipynb  
+		-i snippets/frontmatter_python.md snippets/mlflow_track_lightning.md \
+		-o 5_mlflow_track_lightning.ipynb
 	sed -i 's/attachment://g' 5_mlflow_track_lightning.ipynb
 
 6_mlflow_api.ipynb: snippets/mlflow_api.md
 	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-				-i snippets/frontmatter_python.md snippets/mlflow_api.md \
-				-o 6_mlflow_api.ipynb  
+		-i snippets/frontmatter_python.md snippets/mlflow_api.md \
+		-o 6_mlflow_api.ipynb
 	sed -i 's/attachment://g' 6_mlflow_api.ipynb
 
 workspace_mlflow/mlflow_api.ipynb: snippets/mlflow_api.md
 	pandoc --resource-path=../ --embed-resources --standalone --wrap=none \
-				-i snippets/frontmatter_python.md snippets/mlflow_api.md \
-				-o workspace_mlflow/mlflow_api.ipynb  
+		-i snippets/frontmatter_python.md snippets/mlflow_api.md \
+		-o workspace_mlflow/mlflow_api.ipynb
 	sed -i 's/attachment://g' workspace_mlflow/mlflow_api.ipynb
+
+clean:
+	rm -f index.md index_nvidia.md index_amd.md \
+		0_intro.ipynb \
+		1_create_lease.ipynb \
+		1_create_server.ipynb \
+		1_create_server_amd.ipynb \
+		1_create_server_nvidia.ipynb \
+		2_prepare_data.ipynb \
+		3_start_mlflow.ipynb \
+		4_mlflow_track_torch.ipynb \
+		5_mlflow_track_lightning.ipynb \
+		6_mlflow_api.ipynb \
+		workspace_mlflow/mlflow_api.ipynb

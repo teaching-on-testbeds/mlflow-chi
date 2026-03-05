@@ -61,7 +61,8 @@ Don't let it finish (it would take a long time) - this is just to see how it wor
 
 After working on this model for a while, though, you realize that you are not being very effective because it's difficult to track, compare, version, and reproduce all of the experiments that you run with small changes.  To address this, at the organization level, the ML Platform team at GourmetGram has set up a tracking server that all GourmetGram ML teams can use to track their experiments. Moving forward, your training scripts should log all the relevant details of each training run to MLFlow.
 
-Switch to the `mlflow` branch of the `gourmetgram-train` repository:
+
+First, close the `train.py` file if it is open. Then, switch to the `mlflow` branch of the `gourmetgram-train` repository:
 
 ```bash
 # run in a terminal inside jupyter container, from the "work/gourmetgram-train" directory
@@ -144,9 +145,23 @@ block, since we are going to interrupt training runs with Ctrl+C, and without "g
 
 Also, when we called `start_run`, we passed a `log_system_metrics=True` argument. This directs MLFlow to automatically start tracking and logging details of the host on which the experiment is running: CPU utilization and memory, GPU utilization and memory, etc.
 
-Note that to automatically log GPU metrics, we must have installed `pyrsmi` (for AMD GPUs) or `pynvml` (for NVIDIA GPUs) - we installed these libraries inside the container image already. (But if we would build a new container image, we'd want to remember that.)
+:::
 
-Besides for the details that are tracked automatically, we also decided to get the output of `rocm-smi` (for AMD GPUs) or `nvidia-smi` (for NVIDIA GPUs), and save the output as a text file in the tracking server. This type of logged item is called an artifact - unlike some of the other data that we track, which is more structured, an artifact can be any kind of file.
+::: {.cell .markdown .gpu-amd}
+
+For AMD runs, automatic GPU metrics logging uses `pyrsmi`, and we include `rocm-smi` output as a text artifact.
+
+:::
+
+::: {.cell .markdown .gpu-nvidia}
+
+For NVIDIA runs, automatic GPU metrics logging uses `pynvml`, and we include `nvidia-smi` output as a text artifact.
+
+:::
+
+::: {.cell .markdown}
+
+Besides for the details that are tracked automatically, we also decided to capture GPU information output and save it as a text file in the tracking server. This type of logged item is called an artifact - unlike some of the other data that we track, which is more structured, an artifact can be any kind of file.
 
 We used
 
@@ -231,21 +246,30 @@ While this is running, in another tab in your browser, open the URL
 http://A.B.C.D:8000/
 ```
 
-where in place of `A.B.C.D`, substitute the floating IP address assigned to *your* instance. You will see the MLFlow browser-based interface. Now, in the list of experiments on the left side, you should see the "food11-classifier" experiment. Click on it, and make sure you see your run listed. (It will be assigned a random name, since we did not specify the run name.)
+where in place of `A.B.C.D`, substitute the floating IP address assigned to *your* instance. You will see the MLFlow browser-based interface. Click on "Experiments" on the left side. Now, in the list of experiments, you should see the "food11-classifier" experiment. Click on it, and make sure you see your run listed. (It will be assigned a random name, since we did not specify the run name.)
 
-Click on your run to see an overview. Note that in the "Details" field of the "Source" table, the exact Git commit hash of the code we are running is logged, so we know exactly what version of our training script generated this run.
+Click on your run to see an overview. Note that in the "Source" field of the "About this run" table on the right side, the exact Git commit hash of the code we are running is logged, so we know exactly what version of our training script generated this run.
 
-As the training script runs, you will see a "Parameters" table and a "Metrics" table on this page, populated with values logged from the experiment.
+As the training script runs, you will see a "Metrics" table and a "Parameters" table on this page, populated with values logged from the experiment.
 
-* Look at the "Parameters" table, and note that the hyperparameters in the `config` dictionary, which we logged with `log_params`, are all there.
 * Look at the "Metrics" section, and note that (at least) the most recent value of each of the system metrics appear there. Once an epoch has passed, model metrics will also appear there.
+* Look at the "Parameters" table, and note that the hyperparameters in the `config` dictionary, which we logged with `log_params`, are all there.
 
 Click on the "System metrics" tab for a visual display of the system metrics over time. In particular, look at the time series chart for the `gpu_0_utilization_percentage` metric, which logs the utilization of the first GPU over time. Wait until a few minutes of system metrics data has been logged. (You can use the "Refresh" button in the top right to update the display.)
 
 
 Notice that the GPU utilization is low - the training script is not keeping the GPU busy! This is not good, but in a way it is good - because it suggest some potential for speeding up our training.
 
-Let's see if there is something we can do. Open `train.py`, and change
+Let's see if there is something we can do. Open `train.py` (this time, it will be the version with MLFlow tracking!), and add
+
+```python
+"num_workers": 16,
+```
+
+to the `config` near the top. 
+
+Then, change
+
 
 ```python
 train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
@@ -256,8 +280,8 @@ to
 
 
 ```python
-train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=16)
-val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=16)
+train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=config["num_workers"])
+val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=config["num_workers"])
 ```
 
 and save this code. 
@@ -302,12 +326,12 @@ Once a few epochs have passed, we can compare these training runs in the MLFlow 
 
 Note the difference between these training runs in:
 
-* the utilization of GPU 0 (logged as `gpu_0_utilization_percentage`, under system metrics)
-* and the time per epoch (logged as `epoch_time`, under model metrics)
+* the time per epoch (logged as `epoch_time`)
+* the utilization of the active GPU (logged as `gpu_0_utilization_percentage`). (By default, system metrics may be shown with wall time on the x-axis; click on the dots in the top right of this plot to access the "Configure" menu, and set the X-axis type to "Step".)
 
 we should see that your system metrics logging has allowed us to **substantially** speed up training by realizing that the GPU utilization aws low, and taking steps to address it. At the end of the training run, you will save these two plot panels for your reference.
 
-Once the training script enters the second fine-tuning phase, it will start to log models. From the "run" page, click on the "Artifacts" tab, and find the model, as well as additional details about the model which are logged automatically (e.g. Python library dependencies, size, creation time).
+Once the training script enters the second fine-tuning phase, it will start to log models. On the left side, from the menu that says "Runs, Models, Traces", click on the "Models" tab and then on one of the logged models. Click on the "Artifacts" tab and find the model, as well as additional details about the model which are logged automatically (e.g. Python library dependencies, size).
 
 Let this training script run to completion (it may take up to 15 minutes), and note that the test scores are also logged in MLFlow. 
 
@@ -327,8 +351,8 @@ Full training run should take: 6 minutes on Liqid, 13 minutes on mi100
 
 MLFlow also includes a model registry, with which we can manage versions of our models. 
 
-From the "run" page, click on the "Artifacts" tab, and find the model. Then, click "Register model" and in the "Model" menu, "Create new model". Name the model `food11` and save.
+From a "model" page, click the "Register model" button in the top right, and in the "Model" menu, "Create new model". Name the model `food11` and save.
 
-Now, in the "Models" tab in MLFlow, you can see the latest version of your model, with its lineage (i.e. the specific run that generated it) associated with it. This allows us to version models, identify exactly the code, system settings, and hyperparameters that created the model, and manage different model versions in different parts of the lifecycle (e.g. staging, canary, production deployment).
+Now, go back to the MLFlow home page, and from the sidebar on the left side, click on the "Models" tab, then on "food11", and then on "Version 1". At the top you can see a link to the specific source run that generated the model. This allows us to version models, identify exactly the code, system settings, and hyperparameters that created the model, and manage different model versions in different parts of the lifecycle (e.g. staging, canary, production deployment).
 
 :::

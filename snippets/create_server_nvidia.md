@@ -7,7 +7,7 @@
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server. 
 
-> **Note**: if you reserved a server with AMD GPU, follow the alternate AMD notebook instead.
+> **Note**: if you reserved an AMD GPU server, [follow the AMD instructions](index_amd), then open `1_create_server.ipynb`.
 
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
@@ -18,6 +18,7 @@ Run the following cell, and make sure the correct project is selected:
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 from chi import server, context, lease
 import os
 
@@ -35,6 +36,7 @@ Change the string in the following cell to reflect the name of *your* lease (**w
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 l = lease.get_lease(f"mlflow_netID") 
 l.show()
 ```
@@ -61,6 +63,7 @@ We will use the lease to bring up a server with the `CC-Ubuntu24.04-CUDA` disk i
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 username = os.getenv('USER') # all exp resources will have this prefix
 s = server.Server(
     f"node-mlflow-{username}", 
@@ -85,12 +88,14 @@ Then, we'll associate a floating IP with the instance, so that we can access it 
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.associate_floating_ip()
 ```
 :::
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.refresh()
 s.check_connectivity()
 ```
@@ -104,6 +109,7 @@ In the output below, make a note of the floating IP that has been assigned to yo
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.refresh()
 s.show(type="widget")
 ```
@@ -122,7 +128,8 @@ Now, we can use `python-chi` to execute commands on the instance, to set it up. 
 
 ::: {.cell .code}
 ```python
-s.execute("git clone --recurse-submodules https://github.com/teaching-on-testbeds/mlflow-chi")
+# run in Chameleon Jupyter environment
+s.execute("git clone --branch main --single-branch https://github.com/teaching-on-testbeds/mlflow-chi")
 ```
 :::
 
@@ -137,6 +144,7 @@ To use common deep learning frameworks like Tensorflow or PyTorch, and ML traini
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("curl -sSL https://get.docker.com/ | sudo sh")
 s.execute("sudo groupadd -f docker; sudo usermod -aG docker $USER")
 ```
@@ -153,6 +161,7 @@ We will also install the NVIDIA container toolkit, with which we can access GPUs
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
@@ -175,6 +184,7 @@ and we can install `nvtop` to monitor GPU usage:
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("sudo apt update")
 s.execute("sudo apt -y install nvtop")
 ```
@@ -206,6 +216,7 @@ Building this container may take a bit of time, but that's OK: we can get it sta
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("docker build -t jupyter-mlflow -f mlflow-chi/docker/Dockerfile.jupyter-torch-mlflow-cuda .")
 ```
 :::

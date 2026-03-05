@@ -63,6 +63,7 @@ services:
       - minio-create-bucket  # make sure minio and posgres services are alive, and bucket is created, before mlflow starts
     environment:
       MLFLOW_TRACKING_URI: http://0.0.0.0:8000
+      MLFLOW_LOGGING_LEVEL: ERROR
       MLFLOW_SERVER_ALLOWED_HOSTS: "*"
       MLFLOW_S3_ENDPOINT_URL: http://minio:9000  # how mlflow will access object store
       AWS_ACCESS_KEY_ID: "your-access-key"

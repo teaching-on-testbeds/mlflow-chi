@@ -6,7 +6,11 @@
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server. 
 
-> **Note**: if you reserved a server with NVIDIA GPU, follow the alternate NVIDIA notebook instead.
+> **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `1_create_server.ipynb`.
+
+For the AMD version of this lab, use this Trovi artifact:
+
+* [MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4)
 
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
@@ -17,6 +21,7 @@ Run the following cell, and make sure the correct project is selected:
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 from chi import server, context, lease
 import os, time
 
@@ -34,6 +39,7 @@ Change the string in the following cell to reflect the name of *your* lease (**w
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 l = lease.get_lease(f"mlflow_netID") 
 l.show()
 ```
@@ -61,6 +67,7 @@ We will use the lease to bring up a server with the `CC-Ubuntu24.04-ROCm` disk i
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 username = os.getenv('USER') # all exp resources will have this prefix
 s = server.Server(
     f"node-mlflow-{username}", 
@@ -85,12 +92,14 @@ Then, we'll associate a floating IP with the instance, so that we can access it 
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.associate_floating_ip()
 ```
 :::
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.refresh()
 s.check_connectivity()
 ```
@@ -104,6 +113,7 @@ In the output below, make a note of the floating IP that has been assigned to yo
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.refresh()
 s.show(type="widget")
 ```
@@ -122,7 +132,8 @@ Now, we can use `python-chi` to execute commands on the instance, to set it up. 
 
 ::: {.cell .code}
 ```python
-s.execute("git clone --recurse-submodules https://github.com/teaching-on-testbeds/mlflow-chi")
+# run in Chameleon Jupyter environment
+s.execute("git clone --branch amd --single-branch https://github.com/teaching-on-testbeds/mlflow-chi")
 ```
 :::
 
@@ -137,6 +148,7 @@ To use common deep learning frameworks like Tensorflow or PyTorch, and ML traini
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("curl -sSL https://get.docker.com/ | sudo sh")
 s.execute("sudo groupadd -f docker; sudo usermod -aG docker $USER")
 ```
@@ -145,6 +157,12 @@ s.execute("sudo groupadd -f docker; sudo usermod -aG docker $USER")
 ::: {.cell .markdown}
 
 ## Set up the AMD GPU
+
+:::
+
+<!--
+
+::: {.cell .markdown}
 
 
 Before we can use the AMD GPUs, we need to set up the driver using the `amdgpu-install` utility. 
@@ -155,6 +173,7 @@ Let's follow [AMD's instructions for setting up `amdgpu-install`](https://rocm.d
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("sudo apt update; wget https://repo.radeon.com/amdgpu-install/6.4.4/ubuntu/noble/amdgpu-install_6.4.60404-1_all.deb")
 s.execute("sudo apt -o DPkg::Options::='--force-confnew' -y install ./amdgpu-install_6.4.60404-1_all.deb; sudo apt update")
 ```
@@ -170,6 +189,7 @@ To [run containers using ROCm](https://rocm.docs.amd.com/projects/install-on-lin
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("amdgpu-install -y --usecase=dkms")
 ```
 :::
@@ -183,6 +203,7 @@ And, we'll also install the `rocm-smi` utility, so that we can monitor the GPU f
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("sudo apt -y install rocm-smi")
 ```
 :::
@@ -196,6 +217,7 @@ Finally, we will add the `cc` user to the `video` and `render` groups, which are
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("sudo usermod -aG video,render $USER")
 ```
 :::
@@ -212,6 +234,7 @@ To apply the changes to the kernel, we need to reboot, and wait for the server t
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("sudo reboot")
 time.sleep(30)
 ```
@@ -220,10 +243,13 @@ time.sleep(30)
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.refresh()
 s.check_connectivity()
 ```
 :::
+
+-->
 
 ::: {.cell .markdown}
 
@@ -233,6 +259,7 @@ Run
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("rocm-smi")
 ```
 :::
@@ -253,6 +280,7 @@ We can also install `nvtop` to monitor GPU usage - we'll install from source, be
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("sudo apt -y install cmake libncurses-dev libsystemd-dev libudev-dev libdrm-dev libgtest-dev")
 s.execute("git clone https://github.com/Syllo/nvtop")
 s.execute("mkdir -p nvtop/build && cd nvtop/build && cmake .. -DAMDGPU_SUPPORT=ON && sudo make install")
@@ -283,6 +311,7 @@ Building this container will take a **very long** time (ROCm is huge). But that'
 
 ::: {.cell .code}
 ```python
+# run in Chameleon Jupyter environment
 s.execute("docker build -t jupyter-mlflow -f mlflow-chi/docker/Dockerfile.jupyter-torch-mlflow-rocm .")
 ```
 :::

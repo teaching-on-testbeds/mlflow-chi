@@ -23,6 +23,7 @@ First, let's create an MLFlow client and connect to our tracking server:
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 import mlflow
 from mlflow.tracking import MlflowClient
 
@@ -42,6 +43,7 @@ Now, let's specify get the ID of the experiment we are interesting in searching:
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 experiment = client.get_experiment_by_name("food11-classifier")
 experiment
 ```
@@ -55,6 +57,7 @@ We'll use this experiment ID to query our experiment runs. Let's ask MLFlow to r
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 runs = client.search_runs(experiment_ids=[experiment.experiment_id], 
     order_by=["metrics.test_accuracy DESC"], 
     max_results=2)
@@ -69,10 +72,11 @@ Since these are sorted, the first element in `runs` should be the run with the h
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 best_run = runs[0]  # The first run is the best due to sorting
 best_run_id = best_run.info.run_id
 best_test_accuracy = best_run.data.metrics["test_accuracy"]
-model_uri = f"runs:/{best_run_id}/model"
+model_uri = f"runs:/{best_run_id}/food11"
 
 print(f"Best Run ID: {best_run_id}")
 print(f"Test Accuracy: {best_test_accuracy}")
@@ -89,6 +93,7 @@ Let's register this model in the MLFlow model registry. We'll call it "food11-st
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 model_name = "food11-staging"
 registered_model = mlflow.register_model(model_uri=model_uri, name=model_name)
 print(f"Model registered as '{model_name}', version {registered_model.version}")
@@ -111,6 +116,7 @@ Now, let's imagine that a separate process - for example, part of a CI/CD pipeli
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 import mlflow
 from mlflow.tracking import MlflowClient
 
@@ -132,6 +138,7 @@ We can get all versions of the "food11-staging" model:
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 model_versions = client.search_model_versions(f"name='{model_name}'")
 ```
 :::
@@ -145,6 +152,7 @@ We can find the version with the highest version number (latest version):
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 latest_version = max(model_versions, key=lambda v: int(v.version))
 
 print(f"Latest registered version: {latest_version.version}")
@@ -164,6 +172,7 @@ and now, we can download the model artifact (e.g. in order to build it into a Do
 
 ::: {.cell .code}
 ```python
+# run in jupyter container on node-mlflow
 local_download = mlflow.artifacts.download_artifacts(latest_version.source, dst_path="./downloaded_model")
 ```
 :::
@@ -195,6 +204,4 @@ docker stop jupyter
 
 
 :::
-
-
 

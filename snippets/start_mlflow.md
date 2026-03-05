@@ -270,11 +270,7 @@ Log in with the credentials we specified in the Docker Compose YAML:
 * Username: `your-access-key`
 * Password: `your-secret-key`
 
-Then,
-
-* Click on the "Buckets" section and note the `mlflow-artifacts` storage bucket that we created as part of the Docker Compose. 
-* Click on "Monitoring > Metrics" and note the dashboard that shows the storage system health. MinIO works as a distributed object store with many advanced capabilities, although we are not using them; this dashboard lets operators keep an eye on system status.
-* Click on "Object Browser". In this section, you can look at the files that have been uploaded to the object store - but, we haven't used MLFlow yet, so for now there is nothing interesting here. However, as you start to log artifacts to the MLFlow server, you will see them appear here.
+Then, in the "Buckets" sidebar, note the `mlflow-artifacts` storage bucket that we created as part of the Docker Compose. In the MinIO object browser, you can look at the files that have been uploaded to the object store - but, we haven't used MLFlow yet, so for now there is nothing interesting here. However, as you start to log artifacts to the MLFlow server, you will see them appear here.
 
 Next, let's look at the MLFlow UI. This runs on port 8000. In a browser, open
 
@@ -282,7 +278,7 @@ Next, let's look at the MLFlow UI. This runs on port 8000. In a browser, open
 http://A.B.C.D:8000
 ```
 
-where in place of `A.B.C.D`, substitute the floating IP associated with your server.
+where in place of `A.B.C.D`, substitute the floating IP associated with your server. MLFlow includes an experiment tracker, a model registry, and a few other related components. We will focus on the experiment tracker (and to a lesser extent, the model registry). Click on "Experiments" in the sidebar on the left side.
 
 The UI shows a list of tracked "experiments", and experiment "runs". (A "run" corresponds to one instance of training a model; an "experiment" groups together related runs.) Since we have not yet used MLFlow, for now we will only see a "Default" experiment and no runs. But, that will change very soon!
 
@@ -301,12 +297,14 @@ docker image list
 ```
 
 
-The command to run will depend on what type of GPU node you are using - 
+:::
 
-If you are using an AMD GPU (node type `gpu_mi100`), run
+::: {.cell .markdown .gpu-amd}
+
+For AMD GPU instances (like `gpu_mi100`), run
 
 ```bash
-# run on node-mlflow IF it is a gpu_mi100
+# run on node-mlflow
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
     --device=/dev/kfd --device=/dev/dri \
@@ -334,10 +332,14 @@ Here,
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
 
-If you are using an NVIDIA GPU (node type `compute_liqid`), run
+:::
+
+::: {.cell .markdown .gpu-nvidia}
+
+For NVIDIA GPU instances (like `compute_liqid`), run
 
 ```bash
-# run on node-mlflow IF it is a compute_liqid
+# run on node-mlflow
 HOST_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4 )
 docker run  -d --rm  -p 8888:8888 \
     --gpus all \
@@ -355,11 +357,15 @@ Note that we intially get `HOST_IP`, the floating IP assigned to your instance, 
 * `-d` says to start the container and detach, leaving it running in the background
 * `-rm` says that after we stop the container, it should be removed immediately, instead of leaving it around for potential debugging
 * `-p 8888:8888` says to publish the container's port `8888` (the second `8888` in the argument) to the host port `8888` (the first `8888` in the argument)
-* `--gus all` pass the NVIDIA GPUs to the container
+* `--gpus all` pass the NVIDIA GPUs to the container
 * `--shm-size 16G` increases the memory available for interprocess communication
 * the host directory `~/mlflow-chi/workspace_mlflow` is mounted inside the workspace as `/home/jovyan/work/`
 * the volume `food11` is mounted inside the workspace as `/mnt/`
 * and we pass `MLFLOW_TRACKING_URI` and `FOOD11_DATA_DIR` as environment variables.
+
+:::
+
+::: {.cell .markdown}
 
 To access the Jupyter service, we will need its randomly generated secret token (which secures it from unauthorized access). We'll get this token by running `jupyter server list` inside the `jupyter` container:
 
@@ -385,6 +391,6 @@ Open a terminal ("File > New > Terminal") inside the Jupyter server environment,
 env
 ```
 
-to see environment variables. Confirm that the `MLFLOW_TRACKING_URI` is set, with the correct floating IP address.
+to see environment variables. Confirm that the `MLFLOW_TRACKING_URI` is set, with the correct floating IP address. Our experiments will log to the MLFlow tracking server at that address.
 
 :::

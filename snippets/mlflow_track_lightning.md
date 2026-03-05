@@ -14,7 +14,7 @@ After completing this section, you should be able to:
 
 ::: {.cell .markdown}
 
-Switch to the `lightning` branch of the `gourmetgram-train` repository:
+Close `train.py` if it is still open. Then, switch to the `lightning` branch of the `gourmetgram-train` repository:
 
 ```bash
 # run in a terminal inside jupyter container, from the "work/gourmetgram-train" directory
@@ -167,8 +167,6 @@ Then, in the "Runs" section of MLFlow, select this experiment run and your last 
 Scroll to the "Parameters" section, which shows a table with the parameters of the two runs side-by-side. The parameter that you changed should be highlighted.
 
 Then, scroll to the "Metrics" section, which shows a similar table with the metrics logged by both runs. Scroll within the table to see e.g. the test accuracy of each run.
-
-In the "Artifacts" section, you can also see a side-by-side view of the model summary - in case these runs involved different models with different layers, you could see them here.
 
 :::
 
