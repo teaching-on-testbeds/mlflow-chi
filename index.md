@@ -4,7 +4,7 @@ In this tutorial, we explore some of the infrastructure and platform requirement
 
 To run this experiment, you should have already created an account on Chameleon, and become part of a project.
 
-You must also have added your SSH key to the CHI@TACC site.
+You must also have added your SSH key to the KVM@TACC site.
 
 ## Experiment resources
 
@@ -14,11 +14,11 @@ The MLFlow experiment is more interesting if we run it on a node with two GPUs, 
 
 We can browse Chameleon hardware configurations for suitable node types using the [Hardware Browser](https://chameleoncloud.org/hardware/). For example, to find nodes with 2x GPUs: if we expand "Advanced Filters", check the "2" box under "GPU count", and then click "View", we can identify some suitable node types.
 
-In this version, we use NVIDIA `compute_liqid` nodes at CHI@TACC.
+In this version, we use an H100 VM flavor on KVM@TACC.
 
--   The `compute_liqid` nodes at CHI@TACC have one or two NVIDIA A100 40GB GPUs. As of this writing, `liqid01` and `liqid02` have two GPUs.
--   Alternatively, to use `gpu_mi100` nodes and follow the AMD version, refer to the [AMD instructions](index_amd).
--   Alternatively, to use a VM with an H100 GPU on KVM@TACC, refer to the [VM instructions](index_vm).
+-   The `g1.h100.pci.1` flavor at KVM@TACC provides a single NVIDIA H100 GPU.
+-   Alternatively, to use bare metal `compute_liqid` nodes and follow the NVIDIA version, refer to the [NVIDIA instructions](index_nvidia).
+-   Alternatively, to use bare metal `gpu_mi100` nodes and follow the AMD version, refer to the [AMD instructions](index_amd).
 
 Once you decide on GPU type, make sure to follow the instructions specific to that GPU type.
 
@@ -31,36 +31,27 @@ We can use the OpenStack graphical user interface, Horizon, to submit a lease.
 Then,
 
 -   from the [Chameleon website](https://chameleoncloud.org/hardware/)
-
--   click "Experiment" \> "CHI@TACC"
-
+-   click "Experiment" \> "KVM@TACC"
 -   log in if prompted to do so
-
 -   check the project drop-down menu near the top left (which shows e.g. "CHI-XXXXXX"), and make sure the correct project is selected.
 
--   On the left side, click on "Reservations" \> "Leases", and then click on "Host Calendar". In the "Node type" drop down menu, change the type to `compute_liqid` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC. You can use [WolframAlpha](https://www.wolframalpha.com/) or equivalent to convert to your local time zone.
+Reserve a 2 hr 50 minute block on a node with a single H100 GPU. This flavor is named `g1.h100.pci.1` on KVM@TACC.
 
--   Once you have identified an available three-hour block in UTC time that works for you in your local time zone, make a note of:
-
-    -   the start and end time of the time you will try to reserve. (Note that if you mouse over an existing reservation, a pop up will show you the exact start and end time of that reservation.)
-    -   and the name of the node you want to reserve. (We will reserve nodes by name, not by type, to avoid getting a 1-GPU node when we wanted a 2-GPU node.)
-
--   Then, on the left side, click on "Reservations" \> "Leases", and then click on "Create Lease":
-
+-   On the left side, click on "Reservations" \> "Leases", and then click on "Flavor Calendar". In the "Node type" drop down menu, change the type to `g1.h100.pci.1` to see the schedule of availability. You may change the date range setting to "30 days" to see a longer time scale. Note that the dates and times in this display are in UTC, so you will need to convert to your local time zone.
+-   Once you have identified a 2 hr 50 minute block in UTC time that has GPU availability and works for you in your local time zone, make a note of the start and end time of the time you will try to reserve. (Note that if you mouse over a point on the graph, a pop up will show you the exact time.)
+-   Then, on the left side, click on "Leases" again and then "Create Lease":
     -   set the "Name" to `mlflow_netID`, where `netID` is your actual net ID.
-    -   set the start date and time in UTC. To make scheduling smoother, please start your lease on an hour boundary, e.g. `XX:00`.
-    -   modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time to three hours as directed. Also, to avoid a potential race condition that occurs when one lease starts immediately after another lease ends, you should end your lease ten minutes before the end of an hour, e.g. at `YY:50`.
+    -   set the start date and time in UTC.
+    -   modify the lease length (in days) until the end date is correct. Then, set the end time. To be mindful of other users, you should limit your lease time as directed.
     -   Click "Next".
+-   On the "Flavors" tab,
+    -   check the "Reserve Flavors" box
+    -   let "Number of Instances for Flavor" be 1
+    -   and click "Select" next to `g1.h100.pci.1`
+    -   then click "Next".
+-   Then, click "Create". (We won't include any network resources in this lease.)
 
--   On the "Hosts" tab,
-
-    -   check the "Reserve hosts" box
-    -   leave the "Minimum number of hosts" and "Maximum number of hosts" at 1
-    -   in "Resource properties", specify the node name that you identified earlier.
-
--   Click "Next". Then, click "Create". (We won't include any network resources in this lease.)
-
-Your lease status should show as "Pending". Click on the lease to see an overview. It will show the start time and end time, and it will show the name of the physical host that is reserved for you as part of your lease. Make sure that the lease details are correct.
+Your lease status should show as "Pending". If you click on the lease, you can see an overview, including the start time and end time and some more details about the instance flavor you have reserved.
 
 ## Open this experiment on Trovi
 
@@ -68,17 +59,15 @@ Since you will need the full lease time to execute your experiment, you should r
 
 When you are ready to begin, open this experiment on Trovi:
 
--   Use this link: [ML experiment tracking with MLFlow on Chameleon (NVIDIA)](https://trovi.chameleoncloud.org/dashboard/artifacts/aefd5288-b99c-455d-8a85-028d4aad3209) on Trovi
+-   Use this link: [ML experiment tracking with MLFlow on Chameleon (VM H100)](https://trovi.chameleoncloud.org/dashboard/artifacts/0f7d4c62-a65a-4571-9b45-16b692af3ee2) on Trovi
 
 -   Then, click "Launch on Chameleon". This will start a new Jupyter server for you, with the experiment materials already in it.
 
 Inside the `mlflow-chi` directory, continue with `2_create_server.ipynb`.
 
-## Launch and set up NVIDIA A100 40GB server - with python-chi
+## Launch and set up H100 VM server - with python-chi
 
 At the beginning of the lease time, we will bring up our GPU server. We will use the `python-chi` Python API to Chameleon to provision our server.
-
-> **Note**: if you reserved an AMD GPU server, [follow the AMD instructions](index_amd), then open `2_create_server.ipynb`.
 
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
 
@@ -86,19 +75,19 @@ Run the following cell, and make sure the correct project is selected:
 
 ``` python
 # run in Chameleon Jupyter environment
-from chi import server, context, lease
+from chi import server, context, lease, network
 import os
 
-context.version = "1.0" 
+context.version = "1.0"
 context.choose_project()
-context.choose_site(default="CHI@TACC")
+context.choose_site(default="KVM@TACC")
 ```
 
 Change the string in the following cell to reflect the name of *your* lease (**with your own net ID**), then run it to get your lease:
 
 ``` python
 # run in Chameleon Jupyter environment
-l = lease.get_lease(f"mlflow_netID") 
+l = lease.get_lease(f"mlflow_netID")
 l.show()
 ```
 
@@ -106,30 +95,59 @@ The status should show as "ACTIVE" now that we are past the lease start time.
 
 The rest of this notebook can be executed without any interactions from you, so at this point, you can save time by clicking on this cell, then selecting "Run" \> "Run Selected Cell and All Below" from the Jupyter menu.
 
-As the notebook executes, monitor its progress to make sure it does not get stuck on any execution error, and also to see what it is doing!
+As the notebook executes, monitor its progress to make sure it does not get stuck on any execution error, and also to see what it is doing.
 
 We will use the lease to bring up a server with the `CC-Ubuntu24.04-CUDA` disk image.
 
-> **Note**: the following cell brings up a server only if you don't already have one with the same name! (Regardless of its error state.) If you have a server in ERROR state already, delete it first in the Horizon GUI before you run this cell.
+> **Note**: the following cell brings up a server only if you do not already have one with the same name, regardless of its error state. If you already have a server in ERROR state, delete it first in the Horizon GUI before running this cell.
 
 ``` python
 # run in Chameleon Jupyter environment
-username = os.getenv('USER') # all exp resources will have this prefix
+username = os.getenv("USER") # all exp resources will have this prefix
 s = server.Server(
-    f"node-mlflow-{username}", 
-    reservation_id=l.node_reservations[0]["id"],
-    image_name="CC-Ubuntu24.04-CUDA"
+    f"node-mlflow-{username}",
+    image_name="CC-Ubuntu24.04-CUDA",
+    flavor_name=l.get_reserved_flavors()[0].name,
 )
 s.submit(idempotent=True)
 ```
 
-Note: security groups are not used at Chameleon bare metal sites, so we do not have to configure any security groups on this instance.
-
-Then, we'll associate a floating IP with the instance, so that we can access it over SSH.
+Then, we associate a floating IP with the instance:
 
 ``` python
 # run in Chameleon Jupyter environment
 s.associate_floating_ip()
+```
+
+By default, all connections to VM resources are blocked as a security measure. We need to attach one or more security groups to permit access over the Internet on specific ports.
+
+The following security groups will be created (if they do not already exist in our project) and then added to our server. These include SSH, Jupyter, and the MLFlow and MinIO dashboards:
+
+``` python
+# run in Chameleon Jupyter environment
+security_groups = [
+    {"name": "allow-ssh", "port": 22, "description": "Enable SSH traffic on TCP port 22"},
+    {"name": "allow-8888", "port": 8888, "description": "Enable TCP port 8888 (Jupyter)"},
+    {"name": "allow-8000", "port": 8000, "description": "Enable TCP port 8000 (MLFlow)"},
+    {"name": "allow-9000", "port": 9000, "description": "Enable TCP port 9000 (MinIO API)"},
+    {"name": "allow-9001", "port": 9001, "description": "Enable TCP port 9001 (MinIO Console)"},
+]
+```
+
+``` python
+# run in Chameleon Jupyter environment
+for sg in security_groups:
+    secgroup = network.SecurityGroup(
+        {
+            "name": sg["name"],
+            "description": sg["description"],
+        }
+    )
+    secgroup.add_rule(direction="ingress", protocol="tcp", port=sg["port"])
+    secgroup.submit(idempotent=True)
+    s.add_security_group(sg["name"])
+
+print(f"updated security groups: {[sg['name'] for sg in security_groups]}")
 ```
 
 ``` python
@@ -152,7 +170,7 @@ Now, we can use `python-chi` to execute commands on the instance, to set it up. 
 
 ``` python
 # run in Chameleon Jupyter environment
-s.execute("git clone --branch main --single-branch https://github.com/teaching-on-testbeds/mlflow-chi")
+s.execute("git clone --branch vm --single-branch https://github.com/teaching-on-testbeds/mlflow-chi")
 ```
 
 ## Set up Docker
@@ -215,7 +233,7 @@ Leave that cell running, and in the meantime, open an SSH sesson on your server.
 
 where
 
--   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to CHI@TACC
+-   in place of `~/.ssh/id_rsa_chameleon`, substitute the path to your own key that you had uploaded to KVM@TACC
 -   in place of `A.B.C.D`, use the floating IP address you just associated to your instance.
 
 ## Prepare data
