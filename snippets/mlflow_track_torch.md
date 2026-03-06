@@ -203,7 +203,7 @@ to log the training and validation metrics per epoch. We also track the time per
 During the second part of our fine-tuning, when we un-freeze the backbone/base layer, we log the same metrics. In this training loop, though, we additionally log a model checkpoint at the end of each epoch if the validation loss has improved:
 
 ```python
-mlflow.pytorch.log_model(food11_model, "food11")
+mlflow.pytorch.log_model(food11_model, name="model")
 ```
 
 The model *and* many details about it will be saved as an artifact in MLFlow.
