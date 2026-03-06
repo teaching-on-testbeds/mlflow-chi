@@ -69,10 +69,6 @@ At the beginning of the lease time, we will bring up our GPU server. We will use
 
 > **Note**: if you reserved an NVIDIA GPU server, [follow the NVIDIA instructions](index_nvidia), then open `2_create_server.ipynb`.
 
-For the AMD version of this lab, use this Trovi artifact:
-
--   [MLFlow on Chameleon (AMD)](https://trovi.chameleoncloud.org/dashboard/artifacts/9955458e-49b8-47b7-92e3-a6a84a70e0e4)
-
 We will execute the cells in this notebook inside the Chameleon Jupyter environment.
 
 Run the following cell, and make sure the correct project is selected:
@@ -701,7 +697,7 @@ to log the training and validation metrics per epoch. We also track the time per
 During the second part of our fine-tuning, when we un-freeze the backbone/base layer, we log the same metrics. In this training loop, though, we additionally log a model checkpoint at the end of each epoch if the validation loss has improved:
 
 ``` python
-mlflow.pytorch.log_model(food11_model, "food11")
+mlflow.pytorch.log_model(food11_model, name="model")
 ```
 
 The model *and* many details about it will be saved as an artifact in MLFlow.
@@ -1041,7 +1037,7 @@ Since these are sorted, the first element in `runs` should be the run with the h
 best_run = runs[0]  # The first run is the best due to sorting
 best_run_id = best_run.info.run_id
 best_test_accuracy = best_run.data.metrics["test_accuracy"]
-model_uri = f"runs:/{best_run_id}/food11"
+model_uri = f"runs:/{best_run_id}/model"
 
 print(f"Best Run ID: {best_run_id}")
 print(f"Test Accuracy: {best_test_accuracy}")
