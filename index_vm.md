@@ -728,7 +728,7 @@ to log the training and validation metrics per epoch. We also track the time per
 During the second part of our fine-tuning, when we un-freeze the backbone/base layer, we log the same metrics. In this training loop, though, we additionally log a model checkpoint at the end of each epoch if the validation loss has improved:
 
 ``` python
-mlflow.pytorch.log_model(food11_model, "food11")
+mlflow.pytorch.log_model(food11_model, name="model")
 ```
 
 The model *and* many details about it will be saved as an artifact in MLFlow.
@@ -1068,7 +1068,7 @@ Since these are sorted, the first element in `runs` should be the run with the h
 best_run = runs[0]  # The first run is the best due to sorting
 best_run_id = best_run.info.run_id
 best_test_accuracy = best_run.data.metrics["test_accuracy"]
-model_uri = f"runs:/{best_run_id}/food11"
+model_uri = f"runs:/{best_run_id}/model"
 
 print(f"Best Run ID: {best_run_id}")
 print(f"Test Accuracy: {best_test_accuracy}")
